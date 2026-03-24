@@ -36,12 +36,28 @@ export const AuthProvider = ({ children }) => {
   }
 
   const signUp = async (email, password, username, fullName) => {
+    // 1. Create the auth user
     const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) throw error
-    if (data.user) {
-      await supabase.from('profiles').insert({
-        id: data.user.id, username, full_name: fullName
-      })
+    if (!data.user) throw new Error('Signup failed')
+  
+    // 2. Create the profile (must succeed, else rollback auth user)
+    try {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({ id: data.user.id, username, full_name: fullName })
+      if (profileError) {
+        // If profile creation fails (e.g., duplicate username), sign out the user
+        await supabase.auth.signOut()
+        if (profileError.code === '23505') {
+          throw new Error('Username already taken. Please choose another.')
+        }
+        throw new Error('Could not create profile. Please try again.')
+      }
+    } catch (err) {
+      // Ensure the auth user is logged out if anything goes wrong
+      await supabase.auth.signOut()
+      throw err
     }
     return data
   }

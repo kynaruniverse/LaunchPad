@@ -17,14 +17,9 @@ export const productsService = {
   },
 
   async getProduct(id) {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, profiles:user_id (id, username, full_name, avatar_url)')
-      .eq('id', id)
-      .single()
+    const { data: product, error } = await supabase.rpc('increment_product_view', { product_id: id })
     if (error) throw error
-    await supabase.from('products').update({ view_count: (data.view_count || 0) + 1 }).eq('id', id)
-    return data
+    return product
   },
 
   async submitProduct({ userId, title, tagline, description, category, tags, mediaUrls, websiteUrl }) {
