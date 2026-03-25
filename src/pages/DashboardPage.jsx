@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, Rocket, MessageCircle, Plus, MoreHorizontal } from 'lucide-react'
+import { Eye, Rocket, MessageCircle, Plus, MoreHorizontal, Info } from 'lucide-react'
 import { productsService } from '../services/products'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -19,6 +19,29 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
     </div>
     <p style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>{value}</p>
     <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</p>
+  </div>
+)
+
+const TrendingTooltip = () => (
+  <div style={{
+    position: 'relative', display: 'inline-block', cursor: 'help', marginLeft: 4,
+  }}>
+    <Info size={12} color="var(--text-muted)" />
+    <div style={{
+      position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+      background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+      borderRadius: 8, padding: 8, width: 200, fontSize: 11, color: 'var(--text-secondary)',
+      whiteSpace: 'normal', textAlign: 'center', zIndex: 100, display: 'none',
+      pointerEvents: 'none',
+    }} className="tooltip-content">
+      <strong>Trending Score</strong><br/>
+      (upvotes × 3 + comments × 2) ÷ (1 + age in days)
+    </div>
+    <style>{`
+      [style*="cursor: help"]:hover .tooltip-content {
+        display: block;
+      }
+    `}</style>
   </div>
 )
 
@@ -115,10 +138,31 @@ export const DashboardPage = () => {
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{p.title}</p>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }} >{p.tagline}</p>
-                <div style={{ display: 'flex', gap: 16 }}>
-                  {[{ icon: Eye, val: p.view_count || 0 }, { icon: Rocket, val: p.upvote_count || 0 }, { icon: MessageCircle, val: p.comment_count || 0 }].map(({ icon: Icon, val }, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12 }}>
-                      <Icon size={12} />{val}
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {[
+                    { icon: Eye, val: p.view_count || 0, label: 'views' },
+                    { icon: Rocket, val: p.upvote_count || 0, label: 'upvotes' },
+                    { icon: MessageCircle, val: p.comment_count || 0, label: 'comments' },
+                    { icon: () => <Info size={12} />, val: p.trending_score ? p.trending_score.toFixed(1) : '0.0', label: 'trending', tooltip: true }
+                  ].map(({ icon: Icon, val, label, tooltip }, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12, position: 'relative' }}>
+                      <Icon size={12} />
+                      {val}
+                      {tooltip && (
+                        <div style={{ position: 'relative', display: 'inline-block', marginLeft: 2 }}>
+                          <Info size={10} style={{ opacity: 0.6 }} />
+                          <div style={{
+                            position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                            background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+                            borderRadius: 6, padding: 4, width: 160, fontSize: 10, color: 'var(--text-secondary)',
+                            whiteSpace: 'normal', textAlign: 'center', zIndex: 100, display: 'none',
+                            pointerEvents: 'none', marginBottom: 4,
+                          }} className="trending-tooltip">
+                            <strong>Trending Score</strong><br/>
+                            (upvotes × 3 + comments × 2) ÷ (1 + age in days)
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -164,6 +208,19 @@ export const DashboardPage = () => {
           ))}
         </div>
       )}
+      <style>{`
+        .trending-tooltip {
+          display: none;
+        }
+        [style*="cursor: pointer"]:hover .trending-tooltip,
+        [style*="align-items: center"]:hover .trending-tooltip {
+          display: block;
+        }
+        /* Better hover for tooltip */
+        .trending-tooltip {
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   )
 }

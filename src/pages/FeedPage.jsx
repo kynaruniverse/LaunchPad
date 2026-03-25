@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { TrendingUp, Clock, RefreshCw } from 'lucide-react'
+import { TrendingUp, Clock, RefreshCw, Rocket } from 'lucide-react'
 import { ProductCard } from '../components/ProductCard'
 import { CategoryFilter } from '../components/CategoryFilter'
 import { LoadingSpinner } from '../components/LoadingSpinner'
@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext'
 export const FeedPage = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [discoveryMode, setDiscoveryMode] = useState('leaderboard') // 'leaderboard' or 'undiscovered'
   const [loadingMore, setLoadingMore] = useState(false)
   const [category, setCategory] = useState('All')
   const [sort, setSort] = useState('newest')
@@ -22,7 +23,7 @@ export const FeedPage = () => {
 
   useEffect(() => {
     loadFeed(true)
-  }, [category, sort])
+  }, [category, sort, discoveryMode])  // Added discoveryMode dependency
 
   useEffect(() => {
     if (user) loadUserUpvotes()
@@ -39,9 +40,19 @@ export const FeedPage = () => {
     const currentPage = reset ? 0 : page
     reset ? setLoading(true) : setLoadingMore(true)
     try {
-      const data = await productsService.getFeed({ category, sort, page: currentPage })
-      if (reset) { setProducts(data || []); setPage(1) }
-      else { setProducts(prev => [...prev, ...(data || [])]);  setPage(p => p + 1) }
+      let data
+      if (discoveryMode === 'undiscovered') {
+        data = await productsService.getUndiscovered({ category, page: currentPage })
+      } else {
+        data = await productsService.getFeed({ category, sort, page: currentPage })
+      }
+      if (reset) {
+        setProducts(data || [])
+        setPage(1)
+      } else {
+        setProducts(prev => [...prev, ...(data || [])])
+        setPage(p => p + 1)
+      }
       setHasMore((data || []).length === 10)
     } catch (e) {
       toast.error('Failed to load feed')
@@ -78,25 +89,78 @@ export const FeedPage = () => {
         </p>
       </div>
 
-      {/* Sort */}
+      {/* Discovery Mode Toggle */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {[
-          { key: 'newest', icon: Clock, label: 'Newest' },
-          { key: 'trending', icon: TrendingUp, label: 'Trending' },
-        ].map(({ key, icon: Icon, label }) => (
-          <button key={key} onClick={() => setSort(key)} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '7px 14px', borderRadius: 999,
-            background: sort === key ? 'var(--accent-soft)' : 'var(--surface)',
-            border: `1px solid ${sort === key ? 'var(--accent)' : 'var(--border)'}`,
-            color: sort === key ? 'var(--accent)' : 'var(--text-secondary)',
+        <button
+          onClick={() => setDiscoveryMode('leaderboard')}
+          style={{
+            padding: '6px 12px', borderRadius: 999,
+            background: discoveryMode === 'leaderboard' ? 'var(--accent-soft)' : 'var(--surface)',
+            border: `1px solid ${discoveryMode === 'leaderboard' ? 'var(--accent)' : 'var(--border)'}`,
+            color: discoveryMode === 'leaderboard' ? 'var(--accent)' : 'var(--text-secondary)',
             fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>
-            <Icon size={13} />
-            {label}
-          </button>
-        ))}
+          }}
+        >
+          📈 Leaderboard
+        </button>
+        <button
+          onClick={() => setDiscoveryMode('undiscovered')}
+          style={{
+            padding: '6px 12px', borderRadius: 999,
+            background: discoveryMode === 'undiscovered' ? 'var(--accent-soft)' : 'var(--surface)',
+            border: `1px solid ${discoveryMode === 'undiscovered' ? 'var(--accent)' : 'var(--border)'}`,
+            color: discoveryMode === 'undiscovered' ? 'var(--accent)' : 'var(--text-secondary)',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          💎 Undiscovered
+        </button>
       </div>
+
+      {/* Sort (only show in leaderboard mode) */}
+      {discoveryMode === 'leaderboard' && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+          {[
+            { key: 'newest', icon: Clock, label: 'Newest' },
+            { key: 'popular', icon: TrendingUp, label: 'Most Upvoted' },
+            { key: 'trending', icon: Rocket, label: 'Trending' },
+          ].map(({ key, icon: Icon, label }) => (
+            <button key={key} onClick={() => setSort(key)} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 999,
+              background: sort === key ? 'var(--accent-soft)' : 'var(--surface)',
+              border: `1px solid ${sort === key ? 'var(--accent)' : 'var(--border)'}`,
+              color: sort === key ? 'var(--accent)' : 'var(--text-secondary)',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>
+              <Icon size={13} />
+              {label}
+            </button>
+          ))}
+          <div style={{ marginLeft: 'auto', position: 'relative' }}>
+            <button
+              onMouseEnter={e => { e.currentTarget.nextSibling.style.display = 'block'; }}
+              onMouseLeave={e => { e.currentTarget.nextSibling.style.display = 'none'; }}
+              style={{
+                background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'help'
+              }}
+            >
+              ℹ️
+            </button>
+            <div style={{
+              display: 'none', position: 'absolute', right: 0, top: 30,
+              background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+              borderRadius: 8, padding: 12, width: 220, fontSize: 12, zIndex: 10,
+              color: 'var(--text-secondary)', lineHeight: 1.5,
+            }}>
+              <strong>How ranking works:</strong><br/>
+              • Newest: by launch date<br/>
+              • Popular: total upvotes<br/>
+              • Trending: upvotes & comments with recency boost
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Categories */}
       <div style={{ marginBottom: 24 }}>

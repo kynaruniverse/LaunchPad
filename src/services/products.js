@@ -6,11 +6,26 @@ export const productsService = {
       .from('products')
       .select('*, profiles:user_id (id, username, full_name, avatar_url)')
       .range(page * limit, (page + 1) * limit - 1)
-
+  
     if (category !== 'All') query = query.eq('category', category)
     if (sort === 'newest') query = query.order('created_at', { ascending: false })
-    else if (sort === 'trending') query = query.order('upvote_count', { ascending: false })
+    else if (sort === 'trending') query = query.order('trending_score', { ascending: false })
+    else if (sort === 'popular') query = query.order('upvote_count', { ascending: false })
+  
+    const { data, error } = await query
+    if (error) throw error
+    return data
+  },
 
+  async getUndiscovered({ category = 'All', page = 0, limit = 10 } = {}) {
+    let query = supabase
+      .from('products')
+      .select('*, profiles:user_id (id, username, full_name, avatar_url)')
+      .range(page * limit, (page + 1) * limit - 1)
+      .lte('upvote_count', 5)
+      .order('created_at', { ascending: false })
+
+    if (category !== 'All') query = query.eq('category', category)
     const { data, error } = await query
     if (error) throw error
     return data
