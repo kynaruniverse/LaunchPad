@@ -159,3 +159,32 @@ BEGIN
     PERFORM increment_feedback_points(owner_id, 3);
 END;
 $$ LANGUAGE plpgsql;
+
+-- 8. Fix for existing update_trending_score trigger (if it exists)
+-- This ensures the trending score calculation handles date math correctly
+-- Formula: (upvotes * 3 + comments * 2) / (1 + age_in_days)
+
+CREATE OR REPLACE FUNCTION update_trending_score()
+RETURNS TRIGGER AS $$
+DECLARE
+    age_in_days NUMERIC;
+BEGIN
+    -- Calculate age in days (minimum 0)
+    age_in_days := GREATEST(0, EXTRACT(EPOCH FROM (NOW() - NEW.created_at)) / 86400);
+    
+    -- Calculate score using the formula from the audit document
+    NEW.trending_score := (COALESCE(NEW.upvote_count, 0) * 3 + COALESCE(NEW.comment_count, 0) * 2) / (1 + age_in_days);
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Re-apply trigger to products table
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trig_update_trending_score') THEN
+        CREATE TRIGGER trig_update_trending_score
+        BEFORE INSERT OR UPDATE OF upvote_count, comment_count ON products
+        FOR EACH ROW EXECUTE FUNCTION update_trending_score();
+    END IF;
+END $$;
