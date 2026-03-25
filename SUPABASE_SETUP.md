@@ -285,7 +285,7 @@ ORDER BY routine_name;
 
 ### Test Product Creation
 ```sql
--- Insert a test product
+-- Insert a test product using a subquery to find a real user_id
 INSERT INTO products (
   user_id,
   title,
@@ -299,7 +299,7 @@ INSERT INTO products (
   feedback_focus,
   status
 ) VALUES (
-  '00000000-0000-0000-0000-000000000000', -- Replace with a real user_id
+  (SELECT id FROM profiles LIMIT 1), -- Automatically finds a valid user_id
   'Test Product',
   'A test product for LaunchPad',
   'This is a test',
@@ -324,7 +324,7 @@ INSERT INTO comments (
   feedback_status
 ) VALUES (
   (SELECT id FROM products LIMIT 1),
-  '00000000-0000-0000-0000-000000000000', -- Replace with a real user_id
+  (SELECT id FROM profiles LIMIT 1), -- Automatically finds a valid user_id
   'This is a suggestion for improvement',
   'suggestion',
   'new'
@@ -334,13 +334,13 @@ INSERT INTO comments (
 ### Test RPC Functions
 ```sql
 -- Test increment_product_view
-SELECT increment_product_view('00000000-0000-0000-0000-000000000001');
+SELECT increment_product_view((SELECT id FROM products LIMIT 1));
 
 -- Test increment_upvote
-SELECT increment_upvote('00000000-0000-0000-0000-000000000001');
+SELECT increment_upvote((SELECT id FROM products LIMIT 1));
 
 -- Test increment_feedback_points
-SELECT increment_feedback_points('00000000-0000-0000-0000-000000000001', 5);
+SELECT increment_feedback_points((SELECT id FROM profiles LIMIT 1), 5);
 ```
 
 ---
