@@ -94,9 +94,10 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 7. RPC Functions (Drops and Recreates for clean state)
+-- 7. RPC Functions (Explicitly drop before creating to avoid return type mismatch)
 
 -- RPC: Increment Product View
+DROP FUNCTION IF EXISTS increment_product_view(UUID);
 CREATE OR REPLACE FUNCTION increment_product_view(p_id UUID)
 RETURNS VOID AS $$
 BEGIN
@@ -107,6 +108,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- RPC: Increment Upvote
+DROP FUNCTION IF EXISTS increment_upvote(UUID);
 CREATE OR REPLACE FUNCTION increment_upvote(p_id UUID)
 RETURNS VOID AS $$
 BEGIN
@@ -117,6 +119,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- RPC: Decrement Upvote
+DROP FUNCTION IF EXISTS decrement_upvote(UUID);
 CREATE OR REPLACE FUNCTION decrement_upvote(p_id UUID)
 RETURNS VOID AS $$
 BEGIN
@@ -127,6 +130,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- RPC: Increment Feedback Points
+DROP FUNCTION IF EXISTS increment_feedback_points(UUID, INTEGER);
 CREATE OR REPLACE FUNCTION increment_feedback_points(u_id UUID, points INTEGER)
 RETURNS VOID AS $$
 BEGIN
@@ -137,6 +141,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- RPC: Award Done Bonus
+DROP FUNCTION IF EXISTS award_done_bonus(UUID);
 CREATE OR REPLACE FUNCTION award_done_bonus(c_id UUID)
 RETURNS VOID AS $$
 DECLARE
