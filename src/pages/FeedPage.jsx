@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { TrendingUp, Clock, BarChart2, RefreshCw, Users } from 'lucide-react'
+import { TrendingUp, Clock, BarChart2, RefreshCw, Users, Info, Sparkles, Trophy } from 'lucide-react'
 import { ProductCard } from '../components/ProductCard'
 import { CategoryFilter } from '../components/CategoryFilter'
 import { LoadingSpinner } from '../components/LoadingSpinner'
@@ -15,8 +15,8 @@ const RankingExplainer = ({ sort }) => {
   const [open, setOpen] = useState(false)
   const labels = {
     trending: '(upvotes × 3 + comments × 2) ÷ (1 + age in days)',
-    pure:     'Total upvotes only — no time decay',
-    newest:   'Sorted by submission date',
+    pure:     'Total upvotes only — no time decay algorithm',
+    newest:   'Sorted by submission date (newest first)',
   }
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -26,24 +26,29 @@ const RankingExplainer = ({ sort }) => {
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         aria-label="How ranking works"
-        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'help', fontSize: 14, lineHeight: 1 }}
+        style={{ 
+          background: 'var(--surface-elevated)', border: '1px solid var(--border)', 
+          color: 'var(--text-muted)', cursor: 'help', fontSize: 12, 
+          width: 24, height: 24, borderRadius: '50%', display: 'flex', 
+          alignItems: 'center', justifyContent: 'center' 
+        }}
       >
-        ℹ️
+        <Info size={14} />
       </button>
       {open && (
         <div style={{
-          position: 'absolute', right: 0, top: 28, zIndex: 20,
+          position: 'absolute', right: 0, top: 32, zIndex: 100,
           background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-          borderRadius: 10, padding: '10px 14px', width: 240, fontSize: 12,
+          borderRadius: 12, padding: '12px 16px', width: 260, fontSize: 12,
           color: 'var(--text-secondary)', lineHeight: 1.6, pointerEvents: 'none',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
         }}>
-          <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
-            How "{sort}" works:
+          <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
+            Ranking Algorithm: {sort.toUpperCase()}
           </strong>
-          {labels[sort]}
-          <div style={{ marginTop: 6, borderTop: '1px solid var(--border)', paddingTop: 6, color: 'var(--text-muted)', fontSize: 11 }}>
-            Switch to "Pure" for upvotes only with no algorithm.
+          <p>{labels[sort]}</p>
+          <div style={{ marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 10, color: 'var(--text-muted)', fontSize: 11, fontStyle: 'italic' }}>
+            We believe in transparency. Switch to "Pure" for a raw leaderboard.
           </div>
         </div>
       )}
@@ -127,109 +132,127 @@ export const FeedPage = () => {
   const isNew = (createdAt) => Date.now() - new Date(createdAt).getTime() < 86400000
 
   return (
-    <div className="page">
+    <div className="page" style={{ maxWidth: 800, margin: '0 auto', padding: '80px 16px' }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>
           Discover Projects 🚀
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 15 }}>
-          Ideas, MVPs, betas and live products — from the indie community.
+        <p style={{ color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.6 }}>
+          Explore ideas, MVPs, and live products from the indie community. Feedback-driven and transparent.
         </p>
       </div>
 
-      {/* Discovery mode */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {[
-          { key: 'leaderboard',  label: '📈 Leaderboard' },
-          { key: 'undiscovered', label: '💎 Undiscovered' },
-        ].map(({ key, label }) => (
-          <button key={key} onClick={() => setDiscoveryMode(key)} style={{
-            padding: '6px 14px', borderRadius: 999,
-            background: discoveryMode === key ? 'var(--accent-soft)' : 'var(--surface)',
-            border: `1px solid ${discoveryMode === key ? 'var(--accent)' : 'var(--border)'}`,
-            color: discoveryMode === key ? 'var(--accent)' : 'var(--text-secondary)',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>{label}</button>
-        ))}
-
-        {/* Indie only toggle */}
-        <button
-          onClick={() => setIndieOnly(v => !v)}
-          style={{
-            padding: '6px 14px', borderRadius: 999,
-            background: indieOnly ? 'rgba(6,182,212,0.12)' : 'var(--surface)',
-            border: `1px solid ${indieOnly ? '#06B6D4' : 'var(--border)'}`,
-            color: indieOnly ? '#06B6D4' : 'var(--text-secondary)',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}
-        >
-          <Users size={13} /> Solo / Indie only
-        </button>
-      </div>
-
-      {/* Sort + time range (leaderboard only) */}
-      {discoveryMode === 'leaderboard' && (
-        <>
-          {/* Sort */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* Discovery Mode & Filters Bar */}
+      <div style={{ 
+        display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 32,
+        padding: 20, background: 'var(--surface)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
             {[
-              { key: 'trending', icon: TrendingUp, label: 'Trending' },
-              { key: 'pure',     icon: BarChart2,  label: 'Pure' },
-              { key: 'newest',   icon: Clock,      label: 'Newest' },
-            ].map(({ key, icon: Icon, label }) => (
-              <button key={key} onClick={() => setSort(key)} style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '7px 14px', borderRadius: 999,
-                background: sort === key ? 'var(--accent-soft)' : 'var(--surface)',
-                border: `1px solid ${sort === key ? 'var(--accent)' : 'var(--border)'}`,
-                color: sort === key ? 'var(--accent)' : 'var(--text-secondary)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              { key: 'leaderboard',  label: 'Leaderboard', icon: Trophy },
+              { key: 'undiscovered', label: 'Undiscovered', icon: Sparkles },
+            ].map(({ key, label, icon: Icon }) => (
+              <button key={key} onClick={() => setDiscoveryMode(key)} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 16px', borderRadius: 999,
+                background: discoveryMode === key ? 'var(--accent)' : 'var(--surface-elevated)',
+                border: `1px solid ${discoveryMode === key ? 'var(--accent)' : 'var(--border)'}`,
+                color: discoveryMode === key ? '#fff' : 'var(--text-secondary)',
+                fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                transition: 'all 0.15s',
               }}>
-                <Icon size={13} />{label}
+                <Icon size={16} /> {label}
               </button>
             ))}
-            <RankingExplainer sort={sort} />
           </div>
 
-          {/* Time range */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            {[
-              { key: 'today', label: 'Today' },
-              { key: 'week',  label: 'This Week' },
-              { key: 'all',   label: 'Evergreen' },
-            ].map(({ key, label }) => (
-              <button key={key} onClick={() => setRange(key)} style={{
-                padding: '5px 12px', borderRadius: 999,
-                background: range === key ? 'var(--surface-elevated)' : 'transparent',
-                border: `1px solid ${range === key ? 'var(--border)' : 'transparent'}`,
-                color: range === key ? 'var(--text-primary)' : 'var(--text-muted)',
-                fontSize: 12, fontWeight: range === key ? 700 : 500, cursor: 'pointer',
-              }}>{label}</button>
-            ))}
-          </div>
-        </>
-      )}
+          <button
+            onClick={() => setIndieOnly(v => !v)}
+            style={{
+              padding: '8px 16px', borderRadius: 999,
+              background: indieOnly ? 'rgba(6,182,212,0.12)' : 'transparent',
+              border: `1px solid ${indieOnly ? '#06B6D4' : 'var(--border)'}`,
+              color: indieOnly ? '#06B6D4' : 'var(--text-muted)',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'all 0.15s',
+            }}
+          >
+            <Users size={16} /> Solo / Indie only
+          </button>
+        </div>
 
-      {/* Category filter */}
-      <div style={{ marginBottom: 24 }}>
+        {/* Sorting & Time Range (Conditional) */}
+        {discoveryMode === 'leaderboard' && (
+          <div style={{ 
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
+            flexWrap: 'wrap', gap: 16, paddingTop: 16, borderTop: '1px solid var(--border)' 
+          }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {[
+                { key: 'trending', icon: TrendingUp, label: 'Trending' },
+                { key: 'pure',     icon: BarChart2,  label: 'Pure' },
+                { key: 'newest',   icon: Clock,      label: 'Newest' },
+              ].map(({ key, icon: Icon, label }) => (
+                <button key={key} onClick={() => setSort(key)} style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px', borderRadius: 'var(--radius-md)',
+                  background: sort === key ? 'var(--surface-elevated)' : 'transparent',
+                  border: `1px solid ${sort === key ? 'var(--border)' : 'transparent'}`,
+                  color: sort === key ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontSize: 13, fontWeight: sort === key ? 700 : 500, cursor: 'pointer',
+                }}>
+                  <Icon size={14} /> {label}
+                </button>
+              ))}
+              <RankingExplainer sort={sort} />
+            </div>
+
+            <div style={{ display: 'flex', gap: 4, background: 'var(--surface-elevated)', padding: 4, borderRadius: 8 }}>
+              {[
+                { key: 'today', label: 'Today' },
+                { key: 'week',  label: 'Week' },
+                { key: 'all',   label: 'All' },
+              ].map(({ key, label }) => (
+                <button key={key} onClick={() => setRange(key)} style={{
+                  padding: '4px 12px', borderRadius: 6,
+                  background: range === key ? 'var(--surface)' : 'transparent',
+                  border: 'none',
+                  color: range === key ? 'var(--accent)' : 'var(--text-muted)',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                }}>{label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Category Filter */}
+      <div style={{ marginBottom: 32 }}>
         <CategoryFilter selected={category} onSelect={setCategory} />
       </div>
 
-      {/* Feed */}
+      {/* Feed Content */}
       {loading ? (
-        <LoadingSpinner message="Loading feed..." />
+        <div style={{ padding: '40px 0' }}>
+          <LoadingSpinner message="Curating your feed..." />
+        </div>
       ) : products.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 0' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🚀</div>
-          <h3 style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>Nothing here yet</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-            {indieOnly ? 'No indie-only projects match your filters.' : 'Be the first to submit!'}
+        <div style={{ 
+          textAlign: 'center', padding: '100px 0', 
+          background: 'var(--surface)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border)' 
+        }}>
+          <div style={{ fontSize: 64, marginBottom: 24 }}>🏜️</div>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>No projects found</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: 15, maxWidth: 300, margin: '0 auto' }}>
+            {indieOnly ? 'Try turning off the "Indie only" filter or exploring other categories.' : 'Be the first to submit a project in this category!'}
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {products.map(p => (
             <ProductCard
               key={p.id}
@@ -245,16 +268,19 @@ export const FeedPage = () => {
               onClick={() => loadFeed(false)}
               disabled={loadingMore}
               style={{
-                width: '100%', padding: '14px',
+                width: '100%', padding: '16px', marginTop: 12,
                 background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)',
-                fontSize: 14, fontWeight: 600,
+                borderRadius: 'var(--radius-lg)', color: 'var(--text-secondary)',
+                fontSize: 15, fontWeight: 700,
                 cursor: loadingMore ? 'not-allowed' : 'pointer',
                 opacity: loadingMore ? 0.6 : 1,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                transition: 'all 0.2s'
               }}
+              onMouseEnter={e => { if (!loadingMore) e.currentTarget.style.borderColor = 'var(--accent)' }}
+              onMouseLeave={e => { if (!loadingMore) e.currentTarget.style.borderColor = 'var(--border)' }}
             >
-              {loadingMore ? <LoadingSpinner /> : <><RefreshCw size={15} /> Load more</>}
+              {loadingMore ? <LoadingSpinner /> : <><RefreshCw size={18} /> Load more projects</>}
             </button>
           )}
         </div>
