@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Globe, Lock, BookMarked, ArrowLeft, Trash2, ExternalLink } from 'lucide-react'
+import { Plus, Globe, Lock, BookMarked, ArrowLeft, Trash2, ExternalLink, Layout, Search, Filter, MoreVertical, X, Check, Bookmark } from 'lucide-react'
 import { collectionsService } from '../services/collections'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -53,37 +53,42 @@ const CollectionDetail = ({ collection, onBack, onDelete }) => {
   }
 
   return (
-    <div>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 16px' }}>
       {/* Header */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 40 }}>
         <button onClick={onBack} style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
-          background: 'none', border: 'none', cursor: 'pointer',
-          marginBottom: 20, padding: 0,
-        }}>
-          <ArrowLeft size={16} /> Collections
+          color: 'var(--text-secondary)', fontSize: 14, fontWeight: 700,
+          background: 'var(--surface-elevated)', border: '1px solid var(--border)', 
+          cursor: 'pointer', marginBottom: 24, padding: '8px 16px', borderRadius: 999,
+          transition: 'all 0.15s'
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+        >
+          <ArrowLeft size={16} /> Back to Collections
         </button>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
             <div style={{
-              width: 52, height: 52, borderRadius: 'var(--radius-md)',
-              background: 'var(--accent-soft)',
+              width: 64, height: 64, borderRadius: '20px',
+              background: 'var(--accent-soft)', border: '1px solid var(--accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              boxShadow: '0 8px 24px var(--accent-glow)'
             }}>
-              <BookMarked size={24} color="var(--accent)" />
+              <BookMarked size={32} color="var(--accent)" />
             </div>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.02em' }}>
                 {collection.title}
               </h1>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 {collection.is_public
-                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--success)' }}><Globe size={12} /> Public</span>
-                  : <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-muted)' }}><Lock size={12} /> Private</span>
+                  ? <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--success)', background: 'rgba(34,197,94,0.1)', padding: '2px 10px', borderRadius: 999 }}><Globe size={14} /> Public</span>
+                  : <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--text-muted)', background: 'var(--surface-elevated)', padding: '2px 10px', borderRadius: 999 }}><Lock size={14} /> Private</span>
                 }
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
                   · {items.length} project{items.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -92,114 +97,137 @@ const CollectionDetail = ({ collection, onBack, onDelete }) => {
 
           {isOwner && (
             <button onClick={handleDeleteCollection} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '8px 12px', borderRadius: 'var(--radius-md)',
-              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-              color: 'var(--error)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            }}>
-              <Trash2 size={13} /> Delete
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 16px', borderRadius: 'var(--radius-md)',
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              color: 'var(--error)', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              transition: 'all 0.15s'
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)' }}
+            >
+              <Trash2 size={14} /> Delete Collection
             </button>
           )}
         </div>
 
         {collection.description && (
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 12 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16, marginTop: 20, lineHeight: 1.6, maxWidth: 600 }}>
             {collection.description}
           </p>
         )}
       </div>
 
-      {/* Items */}
-      {loading ? (
-        <LoadingSpinner />
-      ) : items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>No projects in this collection yet</p>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Add projects using the bookmark icon on any product card.
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {items.map(product => {
+      {/* Items List */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {loading ? (
+          <div style={{ padding: '40px 0' }}><LoadingSpinner /></div>
+        ) : items.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', padding: '80px 0', 
+            background: 'var(--surface)', border: '1px solid var(--border)', 
+            borderRadius: 'var(--radius-lg)', borderStyle: 'dashed'
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>Empty Collection</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>You haven't added any projects to this collection yet.</p>
+            <button onClick={() => navigate('/')} style={{
+              padding: '10px 24px', borderRadius: 'var(--radius-full)',
+              background: 'var(--accent)', color: '#fff',
+              fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer'
+            }}>Explore Projects</button>
+          </div>
+        ) : (
+          items.map(product => {
             const catColor = CATEGORY_COLORS[product.category] || CATEGORY_COLORS.Other
             const ls = LAUNCH_STATUS_MAP[product.launch_status]
             return (
               <div key={product.id} style={{
-                display: 'flex', gap: 14, padding: 16,
+                display: 'flex', gap: 20, padding: 20,
                 background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)', alignItems: 'flex-start',
-              }}>
+                borderRadius: 'var(--radius-lg)', alignItems: 'center',
+                transition: 'border-color 0.15s'
+              }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+              >
                 {/* Thumbnail */}
                 <div style={{
-                  width: 64, height: 48, borderRadius: 8, flexShrink: 0,
+                  width: 80, height: 60, borderRadius: 12, flexShrink: 0,
                   background: product.media_urls?.[0] ? undefined : `${catColor}15`,
                   overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '1px solid var(--border)'
                 }}>
                   {product.media_urls?.[0]
                     ? <img src={product.media_urls[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none' }} />
-                    : <span style={{ fontSize: 24 }}>{ls?.emoji || '🚀'}</span>
+                    : <span style={{ fontSize: 32 }}>{ls?.emoji || '🚀'}</span>
                   }
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', gap: 6, marginBottom: 4, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <p
-                      style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14, cursor: 'pointer' }}
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <h3
+                      style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: 17, cursor: 'pointer', margin: 0 }}
                       onClick={() => navigate(`/product/${product.id}`)}
                     >
                       {product.title}
-                    </p>
+                    </h3>
                     {ls && (
                       <span style={{
-                        fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999,
-                        color: ls.color, background: `${ls.color}18`,
-                      }}>{ls.emoji} {ls.label}</span>
+                        fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6,
+                        color: ls.color, background: `${ls.color}15`, border: `1px solid ${ls.color}30`,
+                        textTransform: 'uppercase'
+                      }}>{ls.label}</span>
                     )}
                   </div>
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 10 }}>
                     {product.tagline}
                   </p>
-                  <div style={{ display: 'flex', gap: 10, marginTop: 6, alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <span style={{
-                      fontSize: 11, fontWeight: 700,
-                      color: catColor, background: `${catColor}18`,
-                      padding: '2px 8px', borderRadius: 999,
+                      fontSize: 11, fontWeight: 800,
+                      color: catColor, background: `${catColor}15`,
+                      padding: '2px 10px', borderRadius: 999, border: `1px solid ${catColor}30`
                     }}>{product.category}</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      🚀 {product.upvote_count || 0}
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      🚀 {product.upvote_count || 0} upvotes
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
                   {product.website_url && (
                     <a href={product.website_url} target="_blank" rel="noopener noreferrer" style={{
-                      width: 32, height: 32, borderRadius: 8,
+                      width: 40, height: 40, borderRadius: 12,
                       background: 'var(--surface-elevated)', border: '1px solid var(--border)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'var(--text-secondary)', textDecoration: 'none',
-                    }}>
-                      <ExternalLink size={13} />
+                      color: 'var(--text-primary)', textDecoration: 'none', transition: 'all 0.15s'
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                    >
+                      <ExternalLink size={16} />
                     </a>
                   )}
                   {isOwner && (
                     <button onClick={() => handleRemove(product.id)} style={{
-                      width: 32, height: 32, borderRadius: 8,
+                      width: 40, height: 40, borderRadius: 12,
                       background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: 'var(--error)', cursor: 'pointer',
-                    }}>
-                      <Trash2 size={13} />
+                      color: 'var(--error)', cursor: 'pointer', transition: 'all 0.15s'
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.06)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)' }}
+                    >
+                      <Trash2 size={16} />
                     </button>
                   )}
                 </div>
               </div>
             )
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   )
 }
@@ -238,61 +266,68 @@ const CreateForm = ({ onCreated, onCancel }) => {
 
   return (
     <form onSubmit={handleCreate} style={{
-      padding: 20, borderRadius: 'var(--radius-lg)',
-      background: 'var(--surface)', border: '1px solid rgba(255,87,34,0.25)',
-      marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 14,
+      padding: 24, borderRadius: 'var(--radius-lg)',
+      background: 'var(--surface)', border: '1px solid var(--accent)',
+      marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20,
+      boxShadow: '0 12px 40px var(--accent-glow)'
     }}>
-      <h3 style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 16 }}>New Collection</h3>
-      <input
-        value={title} onChange={e => setTitle(e.target.value)}
-        placeholder="Collection name" style={inputStyle}
-        maxLength={80}
-      />
-      <textarea
-        value={description} onChange={e => setDescription(e.target.value)}
-        placeholder="Description (optional)"
-        style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Plus size={20} color="var(--accent)" />
+        <h3 style={{ color: 'var(--text-primary)', fontWeight: 800, fontSize: 18 }}>New Collection</h3>
+      </div>
 
-      {/* Public / Private toggle */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" onClick={() => setIsPublic(true)} style={{
-          flex: 1, padding: '10px', borderRadius: 'var(--radius-md)',
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collection Name</label>
+        <input
+          value={title} onChange={e => setTitle(e.target.value)}
+          placeholder="e.g. My Favorite SaaS Tools" style={inputStyle}
+          maxLength={80}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</label>
+        <textarea
+          value={description} onChange={e => setDescription(e.target.value)}
+          placeholder="What's this collection about?"
+          style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }}
+          maxLength={200}
+        />
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button type="button" onClick={() => setIsPublic(!isPublic)} style={{
+          flex: 1, padding: '12px', borderRadius: 'var(--radius-md)',
           background: isPublic ? 'rgba(34,197,94,0.1)' : 'var(--surface-elevated)',
           border: `1px solid ${isPublic ? 'var(--success)' : 'var(--border)'}`,
-          color: isPublic ? 'var(--success)' : 'var(--text-secondary)',
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          color: isPublic ? 'var(--success)' : 'var(--text-primary)',
+          fontSize: 14, fontWeight: 700, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          transition: 'all 0.15s'
         }}>
-          <Globe size={14} /> Public
-        </button>
-        <button type="button" onClick={() => setIsPublic(false)} style={{
-          flex: 1, padding: '10px', borderRadius: 'var(--radius-md)',
-          background: !isPublic ? 'var(--surface-elevated)' : 'var(--surface-elevated)',
-          border: `1px solid ${!isPublic ? 'var(--accent)' : 'var(--border)'}`,
-          color: !isPublic ? 'var(--accent)' : 'var(--text-secondary)',
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-        }}>
-          <Lock size={14} /> Private
+          {isPublic ? <Globe size={16} /> : <Lock size={16} />}
+          {isPublic ? 'Public' : 'Private'}
         </button>
       </div>
-      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: -6 }}>
-        {isPublic ? 'Visible to everyone — great for curation.' : 'Only you can see this.'}
-      </p>
 
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
         <button type="button" onClick={onCancel} style={{
           flex: 1, padding: '12px', borderRadius: 'var(--radius-md)',
           background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-          color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600,
-        }}>Cancel</button>
-        <button type="submit" disabled={creating || !title.trim()} style={{
+          color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          <X size={16} /> Cancel
+        </button>
+        <button type="submit" disabled={creating} style={{
           flex: 1, padding: '12px', borderRadius: 'var(--radius-md)',
           background: 'var(--accent)', color: '#fff',
           border: 'none', cursor: creating ? 'not-allowed' : 'pointer',
-          fontWeight: 700, opacity: creating ? 0.7 : 1,
-        }}>{creating ? 'Creating...' : 'Create'}</button>
+          fontWeight: 700, fontSize: 14, opacity: creating ? 0.7 : 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        }}>
+          <Check size={16} /> {creating ? 'Creating...' : 'Create Collection'}
+        </button>
       </div>
     </form>
   )
@@ -304,19 +339,16 @@ const CreateForm = ({ onCreated, onCancel }) => {
 export const CollectionsPage = () => {
   const [collections, setCollections] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
   const [activeCollection, setActiveCollection] = useState(null)
+  const [creating, setCreating] = useState(false)
   const { user } = useAuth()
   const toast = useToast()
 
-  useEffect(() => {
-    if (user) loadCollections()
-    else setLoading(false)
-  }, [user])
+  useEffect(() => { loadCollections() }, [user])
 
   const loadCollections = async () => {
     try {
-      const data = await collectionsService.getUserCollections(user.id)
+      const data = await collectionsService.getCollections(user?.id)
       setCollections(data || [])
     } catch (e) {
       toast.error('Failed to load collections')
@@ -325,122 +357,135 @@ export const CollectionsPage = () => {
     }
   }
 
-  const handleCreated = (newCollection) => {
-    setCollections(prev => [newCollection, ...prev])
-    setShowForm(false)
-  }
-
-  const handleDeleted = (collectionId) => {
-    setCollections(prev => prev.filter(c => c.id !== collectionId))
-    setActiveCollection(null)
-  }
-
-  if (!user) return (
-    <div className="page" style={{ textAlign: 'center', paddingTop: 80 }}>
-      <BookMarked size={48} color="var(--text-muted)" style={{ margin: '0 auto 16px', display: 'block' }} />
-      <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>Sign in to create collections</p>
-      <a href="/profile" style={{
-        padding: '12px 28px', borderRadius: 999,
-        background: 'var(--accent)', color: '#fff', fontWeight: 700, textDecoration: 'none',
-      }}>Sign In</a>
-    </div>
-  )
-
-  // Show collection detail view
   if (activeCollection) {
     return (
-      <div className="page">
-        <CollectionDetail
-          collection={activeCollection}
-          onBack={() => setActiveCollection(null)}
-          onDelete={handleDeleted}
-        />
-      </div>
+      <CollectionDetail
+        collection={activeCollection}
+        onBack={() => setActiveCollection(null)}
+        onDelete={(id) => {
+          setCollections(prev => prev.filter(c => c.id !== id))
+          setActiveCollection(null)
+        }}
+      />
     )
   }
 
   return (
-    <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <div className="page" style={{ maxWidth: 900, margin: '0 auto', padding: '80px 16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, gap: 20 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>
             Collections
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
-            Curate and share your favourite indie projects
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
+            Organize and share your favorite indie projects.
           </p>
         </div>
-        <button onClick={() => setShowForm(v => !v)} style={{
-          display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
-          borderRadius: 999, background: 'var(--accent)', color: '#fff',
-          fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
-        }}>
-          <Plus size={16} /> New
-        </button>
+        {!creating && user && (
+          <button onClick={() => setCreating(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '12px 24px', borderRadius: 'var(--radius-full)',
+            background: 'var(--accent)', color: '#fff',
+            fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer',
+            boxShadow: '0 8px 24px var(--accent-glow)'
+          }}>
+            <Plus size={18} /> New Collection
+          </button>
+        )}
       </div>
 
-      {showForm && (
+      {creating && (
         <CreateForm
-          onCreated={handleCreated}
-          onCancel={() => setShowForm(false)}
+          onCreated={(c) => { setCollections(prev => [c, ...prev]); setCreating(false) }}
+          onCancel={() => setCreating(false)}
         />
       )}
 
       {loading ? (
         <LoadingSpinner />
       ) : collections.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 0' }}>
-          <BookMarked size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px', display: 'block' }} />
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>No collections yet</p>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Create a collection to save and organise projects you love.
+        <div style={{ 
+          textAlign: 'center', padding: '100px 0', 
+          background: 'var(--surface)', border: '1px solid var(--border)', 
+          borderRadius: 'var(--radius-lg)', borderStyle: 'dashed'
+        }}>
+          <div style={{ fontSize: 64, marginBottom: 24 }}>📚</div>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>No Collections Yet</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16, maxWidth: 400, margin: '0 auto 32px' }}>
+            Create your first collection to start organizing projects you love.
           </p>
+          {!user && (
+            <button onClick={() => navigate('/profile')} style={{
+              padding: '12px 32px', borderRadius: 'var(--radius-full)',
+              background: 'var(--accent)', color: '#fff',
+              fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer'
+            }}>Sign In to Start</button>
+          )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
           {collections.map(c => (
             <div
               key={c.id}
               onClick={() => setActiveCollection(c)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 14, padding: 16,
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)', cursor: 'pointer',
-                transition: 'border-color 0.15s, transform 0.15s',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 24,
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.borderColor = 'var(--accent)'
-                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.transform = 'translateY(-4px)'
+                e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)'
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.borderColor = 'var(--border)'
                 e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
               }}
             >
-              <div style={{
-                width: 48, height: 48, borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-soft)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <BookMarked size={22} color="var(--accent)" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '14px',
+                  background: 'var(--accent-soft)', border: '1px solid var(--accent)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <BookMarked size={24} color="var(--accent)" />
+                </div>
+                {c.is_public ? (
+                  <div style={{ padding: '4px 10px', borderRadius: 999, background: 'rgba(34,197,94,0.1)', color: 'var(--success)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>Public</div>
+                ) : (
+                  <div style={{ padding: '4px 10px', borderRadius: 999, background: 'var(--surface-elevated)', color: 'var(--text-muted)', fontSize: 10, fontWeight: 800, textTransform: 'uppercase' }}>Private</div>
+                )}
               </div>
 
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{c.title}</p>
-                {c.description && (
-                  <p style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {c.description}
-                  </p>
-                )}
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                  {c.item_count || 0} project{(c.item_count || 0) !== 1 ? 's' : ''}
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.01em' }}>
+                  {c.title}
+                </h3>
+                <p style={{ 
+                  fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', 
+                  overflow: 'hidden', height: '3em'
+                }}>
+                  {c.description || 'No description provided.'}
                 </p>
               </div>
 
-              {c.is_public
-                ? <Globe size={14} color="var(--success)" style={{ flexShrink: 0 }} />
-                : <Lock size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-              }
+              <div style={{ 
+                marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: 13, fontWeight: 600
+              }}>
+                <Bookmark size={14} />
+                {c.collection_items?.[0]?.count || 0} projects
+              </div>
             </div>
           ))}
         </div>

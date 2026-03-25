@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageCircle, Bookmark } from 'lucide-react'
+import { MessageCircle, Bookmark, TrendingUp, User, Users, Info } from 'lucide-react'
 import { UpvoteButton } from './UpvoteButton'
 import { AddToCollectionModal } from './AddToCollectionModal'
 import { CATEGORY_COLORS, LAUNCH_STATUS_MAP } from '../theme'
@@ -12,6 +12,7 @@ export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
   const { user } = useAuth()
   const toast = useToast()
   const [showCollectionModal, setShowCollectionModal] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   const catColor = CATEGORY_COLORS[product.category] || CATEGORY_COLORS.Other
   const thumbnail = product.media_urls?.[0]
@@ -28,137 +29,153 @@ export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
     <>
       <div
         onClick={() => navigate(`/product/${product.id}`)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           background: 'var(--surface)',
           border: '1px solid var(--border)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           cursor: 'pointer',
-          transition: 'border-color 0.2s, transform 0.2s',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.borderColor = 'var(--accent)'
-          e.currentTarget.style.transform = 'translateY(-2px)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.borderColor = 'var(--border)'
-          e.currentTarget.style.transform = 'translateY(0)'
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: hovered ? '0 12px 32px rgba(0,0,0,0.5)' : 'none',
+          transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+          borderColor: hovered ? 'var(--accent)' : 'var(--border)'
         }}
       >
-        {/* Thumbnail */}
-        <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-elevated)' }}>
+        {/* Thumbnail Area */}
+        <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-elevated)', overflow: 'hidden' }}>
           {thumbnail ? (
             <img
               src={thumbnail}
               alt={product.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ 
+                width: '100%', height: '100%', objectFit: 'cover',
+                transition: 'transform 0.5s ease',
+                transform: hovered ? 'scale(1.05)' : 'scale(1)'
+              }}
               onError={e => { e.currentTarget.style.display = 'none' }}
             />
           ) : (
             <div style={{
               width: '100%', height: '100%', display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              background: `${catColor}15`,
+              background: `${catColor}10`,
             }}>
-              <span style={{ fontSize: 40 }}>{launchStatus?.emoji || '🚀'}</span>
+              <span style={{ fontSize: 48, filter: 'grayscale(0.5)' }}>{launchStatus?.emoji || '🚀'}</span>
             </div>
           )}
+
+          {/* Overlay Badges */}
+          <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', gap: 6 }}>
+            {isNew && (
+              <div style={{
+                padding: '4px 10px', borderRadius: 999,
+                background: 'var(--accent)', color: '#fff',
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.05em',
+                boxShadow: '0 4px 12px var(--accent-glow)'
+              }}>
+                NEW
+              </div>
+            )}
+            <div style={{
+              padding: '4px 10px', borderRadius: 999,
+              background: 'rgba(10,10,15,0.7)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#fff', fontSize: 10, fontWeight: 700,
+              display: 'flex', alignItems: 'center', gap: 4
+            }}>
+              <TrendingUp size={10} color="var(--accent)" />
+              {Number(product.trending_score || 0).toFixed(1)}
+            </div>
+          </div>
 
           {/* Category badge */}
           <div style={{
-            position: 'absolute', bottom: 10, right: 10,
-            padding: '4px 10px', borderRadius: 999,
-            background: `${catColor}25`, border: `1px solid ${catColor}50`,
-            color: catColor, fontSize: 11, fontWeight: 700,
+            position: 'absolute', bottom: 12, right: 12,
+            padding: '5px 12px', borderRadius: 999,
+            background: 'rgba(10,10,15,0.7)', backdropFilter: 'blur(8px)',
+            border: `1px solid ${catColor}50`,
+            color: catColor, fontSize: 11, fontWeight: 800,
+            textTransform: 'uppercase', letterSpacing: '0.05em'
           }}>
             {product.category}
           </div>
-
-          {/* NEW badge */}
-          {isNew && (
-            <div style={{
-              position: 'absolute', top: 10, left: 10,
-              padding: '3px 8px', borderRadius: 999,
-              background: 'var(--accent)', color: '#fff',
-              fontSize: 10, fontWeight: 800, letterSpacing: 0.5,
-            }}>
-              NEW
-            </div>
-          )}
         </div>
 
-        {/* Content */}
-        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div>
-            <h3 style={{
-              fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
-              marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
-              {product.title}
-            </h3>
+        {/* Content Area */}
+        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6 }}>
+              <h3 style={{
+                fontSize: 18, fontWeight: 800, color: 'var(--text-primary)',
+                letterSpacing: '-0.01em', lineHeight: 1.2
+              }}>
+                {product.title}
+              </h3>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {launchStatus && (
+                  <div title={launchStatus.desc} style={{
+                    padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 800,
+                    color: launchStatus.color, background: `${launchStatus.color}15`,
+                    border: `1px solid ${launchStatus.color}30`, textTransform: 'uppercase'
+                  }}>
+                    {launchStatus.label}
+                  </div>
+                )}
+              </div>
+            </div>
             <p style={{
-              fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5,
+              fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5,
               display: '-webkit-box', WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              minHeight: '3em'
             }}>
               {product.tagline}
             </p>
           </div>
 
-          {/* Status + indie + feedback focus pills */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {launchStatus && (
-              <span style={{
-                padding: '3px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700,
-                color: launchStatus.color, background: `${launchStatus.color}18`,
-                border: `1px solid ${launchStatus.color}40`,
-              }}>
-                {launchStatus.emoji} {launchStatus.label}
-              </span>
-            )}
+          {/* Metadata Pills */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {product.is_indie && (
               <span style={{
-                padding: '3px 9px', borderRadius: 999, fontSize: 11, fontWeight: 700,
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700,
                 color: '#06B6D4', background: 'rgba(6,182,212,0.12)',
-                border: '1px solid rgba(6,182,212,0.3)',
+                border: '1px solid rgba(6,182,212,0.2)',
               }}>
-                Solo
+                {product.team_size > 1 ? <Users size={12} /> : <User size={12} />}
+                {product.team_size > 1 ? `Team of ${product.team_size}` : 'Solo Indie'}
               </span>
             )}
             {feedbackFocus && (
               <span style={{
-                padding: '3px 9px', borderRadius: 999, fontSize: 11, fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
                 color: 'var(--text-muted)', background: 'var(--surface-elevated)',
                 border: '1px solid var(--border)',
               }}>
-                Feedback: {feedbackFocus}
+                <MessageCircle size={12} />
+                Focus: {feedbackFocus}
               </span>
             )}
           </div>
 
-          {/* Tags */}
-          {product.tags?.length > 0 && (
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {product.tags.slice(0, 3).map((tag, i) => (
-                <span key={i} style={{
-                  padding: '3px 8px', borderRadius: 999,
-                  background: 'var(--surface-elevated)',
-                  color: 'var(--text-muted)', fontSize: 11,
-                }}>#{tag}</span>
-              ))}
-            </div>
-          )}
-
-          {/* Actions */}
+          {/* Bottom Actions Row */}
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: 12, 
+              paddingTop: 16, borderTop: '1px solid var(--border)' 
+            }}
             onClick={e => e.stopPropagation()}
           >
             <UpvoteButton count={product.upvote_count || 0} upvoted={upvoted} onPress={onUpvote} size="sm" />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 8px', color: 'var(--text-secondary)', fontSize: 12 }}>
-              <MessageCircle size={13} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600 }}>
+              <MessageCircle size={15} />
               {product.comment_count || 0}
             </div>
 
@@ -166,31 +183,34 @@ export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
               onClick={handleBookmark}
               aria-label="Save to collection"
               style={{
-                padding: '5px 8px', borderRadius: 999,
-                background: 'transparent', border: 'none',
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'var(--surface-elevated)', border: '1px solid var(--border)',
                 color: 'var(--text-secondary)', cursor: 'pointer',
-                display: 'flex', alignItems: 'center',
-                transition: 'color 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
               }}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'var(--accent)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)' }}
             >
-              <Bookmark size={13} />
+              <Bookmark size={15} />
             </button>
 
             <div style={{ flex: 1 }} />
 
-            {/* Maker */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Maker Info */}
+            <div 
+              onClick={() => navigate(`/profile/${product.profiles?.username}`)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+            >
               <div style={{
-                width: 22, height: 22, borderRadius: '50%',
+                width: 24, height: 24, borderRadius: '8px',
                 background: 'var(--accent-soft)', border: '1px solid var(--accent)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: 700, color: 'var(--accent)',
+                fontSize: 11, fontWeight: 800, color: 'var(--accent)',
               }}>
                 {(product.profiles?.username || 'U')[0].toUpperCase()}
               </div>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', maxWidth: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {product.profiles?.username || 'Anonymous'}
               </span>
             </div>
@@ -198,7 +218,7 @@ export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
         </div>
       </div>
 
-      {/* Collection modal — rendered outside card so it's not clipped */}
+      {/* Collection modal */}
       {showCollectionModal && (
         <div onClick={e => e.stopPropagation()}>
           <AddToCollectionModal

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, LayoutDashboard, BookMarked, Bell, Pencil, Check, X, ExternalLink } from 'lucide-react'
+import { LogOut, LayoutDashboard, BookMarked, Bell, Pencil, Check, X, ExternalLink, Award, Globe, Twitter, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { authService } from '../services/auth'
@@ -11,6 +11,7 @@ const inputStyle = {
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-md)',
   color: 'var(--text-primary)', fontSize: 14,
+  transition: 'border-color 0.15s',
 }
 
 // ─────────────────────────────────────────
@@ -47,24 +48,29 @@ const AuthForm = () => {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: '0 auto', padding: '40px 0' }}>
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <div style={{ fontSize: 52, marginBottom: 12 }}>🚀</div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>LaunchPad</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          {mode === 'signin' ? 'Welcome back' : 'Join the indie maker community'}
+    <div style={{ maxWidth: 400, margin: '0 auto', padding: '60px 16px' }}>
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ 
+          width: 64, height: 64, borderRadius: 16, background: 'var(--accent)', 
+          margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 24px var(--accent-glow)'
+        }}>
+          <Award size={32} color="#fff" />
+        </div>
+        <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, letterSpacing: '-0.02em' }}>LaunchPad</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
+          {mode === 'signin' ? 'Sign in to your account' : 'Join the indie maker community'}
         </p>
       </div>
 
-      {/* Tabs */}
       <div style={{
         display: 'flex', background: 'var(--surface)',
-        border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
-        padding: 4, marginBottom: 24,
+        border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
+        padding: 6, marginBottom: 32, gap: 6,
       }}>
         {['signin', 'signup'].map(m => (
           <button key={m} onClick={() => setMode(m)} style={{
-            flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+            flex: 1, padding: '10px', borderRadius: 'var(--radius-md)',
             background: mode === m ? 'var(--accent)' : 'transparent',
             color: mode === m ? '#fff' : 'var(--text-muted)',
             border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer',
@@ -75,24 +81,41 @@ const AuthForm = () => {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {mode === 'signup' && (
           <>
-            <input style={inputStyle} placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} />
-            <input style={inputStyle} placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} autoCapitalize="none" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>FULL NAME</label>
+              <input style={inputStyle} placeholder="Jane Doe" value={fullName} onChange={e => setFullName(e.target.value)} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>USERNAME</label>
+              <input style={inputStyle} placeholder="janedoe" value={username} onChange={e => setUsername(e.target.value)} autoCapitalize="none" />
+            </div>
           </>
         )}
-        <input style={inputStyle} placeholder="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} autoCapitalize="none" />
-        <input style={inputStyle} placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>EMAIL</label>
+          <input style={inputStyle} placeholder="jane@example.com" type="email" value={email} onChange={e => setEmail(e.target.value)} autoCapitalize="none" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>PASSWORD</label>
+          <input style={inputStyle} placeholder="••••••••" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+        </div>
+        
         <button type="submit" disabled={loading} style={{
           padding: '14px', borderRadius: 'var(--radius-md)',
           background: 'var(--accent)', color: '#fff',
-          fontWeight: 700, fontSize: 15, border: 'none',
+          fontWeight: 700, fontSize: 16, border: 'none',
           cursor: loading ? 'not-allowed' : 'pointer',
           opacity: loading ? 0.7 : 1,
-          boxShadow: '0 0 20px var(--accent-glow)', marginTop: 4,
-        }}>
-          {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+          boxShadow: '0 8px 24px var(--accent-glow)', marginTop: 8,
+          transition: 'transform 0.1s'
+        }}
+          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          {loading ? 'Processing...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
         </button>
       </form>
     </div>
@@ -132,13 +155,13 @@ const EditProfileForm = ({ profile, onSaved, onCancel }) => {
   }
 
   const field = (label, value, onChange, opts = {}) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</label>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
       {opts.textarea ? (
         <textarea
           value={value} onChange={e => onChange(e.target.value)}
           placeholder={opts.placeholder}
-          style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
+          style={{ ...inputStyle, minHeight: 100, resize: 'vertical' }}
           maxLength={opts.maxLength}
         />
       ) : (
@@ -155,33 +178,38 @@ const EditProfileForm = ({ profile, onSaved, onCancel }) => {
 
   return (
     <form onSubmit={handleSave} style={{
-      padding: 20, borderRadius: 'var(--radius-lg)',
-      background: 'var(--surface)', border: '1px solid rgba(255,87,34,0.25)',
-      marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 14,
+      padding: 24, borderRadius: 'var(--radius-lg)',
+      background: 'var(--surface)', border: '1px solid var(--accent)',
+      marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 20,
+      boxShadow: '0 12px 40px var(--accent-glow)'
     }}>
-      <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Edit Profile</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <Pencil size={18} color="var(--accent)" />
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Edit Profile</h3>
+      </div>
+      
       {field('Full Name',   fullName,   setFullName,   { placeholder: 'Your name', maxLength: 80 })}
       {field('Bio',         bio,        setBio,        { placeholder: 'What do you build?', textarea: true, maxLength: 200 })}
       {field('Website',     websiteUrl, setWebsiteUrl, { placeholder: 'https://yoursite.com', type: 'url' })}
-      {field('Twitter / X', twitter,    setTwitter,    { placeholder: '@handle' })}
+      {field('Twitter / X handle', twitter,    setTwitter,    { placeholder: 'e.g. janedoe' })}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
         <button type="button" onClick={onCancel} style={{
-          flex: 1, padding: '11px', borderRadius: 'var(--radius-md)',
+          flex: 1, padding: '12px', borderRadius: 'var(--radius-md)',
           background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-          color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: 13,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
-          <X size={14} /> Cancel
+          <X size={16} /> Cancel
         </button>
         <button type="submit" disabled={saving} style={{
-          flex: 1, padding: '11px', borderRadius: 'var(--radius-md)',
+          flex: 1, padding: '12px', borderRadius: 'var(--radius-md)',
           background: 'var(--accent)', color: '#fff',
           border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-          fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          fontWeight: 700, fontSize: 14, opacity: saving ? 0.7 : 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
-          <Check size={14} /> {saving ? 'Saving...' : 'Save'}
+          <Check size={16} /> {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </form>
@@ -210,89 +238,107 @@ export const ProfilePage = () => {
   )
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'My Dashboard',  to: '/dashboard' },
-    { icon: BookMarked,      label: 'Collections',    to: '/collections' },
-    { icon: Bell,            label: 'Notifications',  to: '/notifications' },
+    { icon: LayoutDashboard, label: 'Maker Dashboard',  to: '/dashboard', desc: 'Manage your projects and feedback' },
+    { icon: BookMarked,      label: 'My Collections',    to: '/collections', desc: 'Saved projects and lists' },
+    { icon: Bell,            label: 'Notifications',  to: '/notifications', desc: 'Activity on your products' },
   ]
 
   const feedbackPoints = displayProfile?.feedback_points || 0
 
   return (
-    <div className="page">
-      {/* Avatar + name */}
-      <div style={{ textAlign: 'center', padding: '32px 0 28px' }}>
-        <div style={{
-          width: 80, height: 80, borderRadius: '50%', margin: '0 auto 16px',
-          background: 'var(--accent-soft)', border: '2px solid var(--accent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 32, fontWeight: 700, color: 'var(--accent)',
-        }}>
-          {(displayProfile?.username || user.email || 'U')[0].toUpperCase()}
+    <div className="page" style={{ maxWidth: 600, margin: '0 auto', padding: '80px 16px' }}>
+      {/* Profile Header */}
+      <div style={{ textAlign: 'center', padding: '40px 0 48px' }}>
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: 24 }}>
+          <div style={{
+            width: 100, height: 100, borderRadius: '30px', margin: '0 auto',
+            background: 'var(--accent-soft)', border: '2px solid var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 40, fontWeight: 800, color: 'var(--accent)',
+            boxShadow: '0 8px 32px var(--accent-glow)'
+          }}>
+            {(displayProfile?.username || user.email || 'U')[0].toUpperCase()}
+          </div>
+          <div style={{
+            position: 'absolute', bottom: -10, right: -10,
+            background: 'var(--surface-elevated)', border: '2px solid var(--border)',
+            borderRadius: '12px', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}>
+            <Award size={14} color="var(--accent)" />
+            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>{feedbackPoints}</span>
+          </div>
         </div>
 
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 2 }}>
-          {displayProfile?.username || 'User'}
+        <h2 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4, letterSpacing: '-0.02em' }}>
+          {displayProfile?.username || 'Indie Maker'}
         </h2>
 
         {displayProfile?.full_name && (
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 2 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 16, fontWeight: 500, marginBottom: 4 }}>
             {displayProfile.full_name}
           </p>
         )}
 
-        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 10 }}>{user.email}</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16 }}>
+          <Mail size={13} /> {user.email}
+        </p>
 
-        {displayProfile?.bio && (
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.5, maxWidth: 340, margin: '0 auto 10px' }}>
+        {displayProfile?.bio ? (
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.6, maxWidth: 400, margin: '0 auto 24px' }}>
             {displayProfile.bio}
+          </p>
+        ) : (
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, fontStyle: 'italic', marginBottom: 24 }}>
+            No bio yet. Tell the community what you build!
           </p>
         )}
 
         {/* Links */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
           {displayProfile?.website_url && (
             <a href={displayProfile.website_url} target="_blank" rel="noopener noreferrer" style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '5px 12px', borderRadius: 999,
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 16px', borderRadius: 'var(--radius-md)',
               background: 'var(--surface)', border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, textDecoration: 'none',
-            }}>
-              <ExternalLink size={12} /> Website
+              color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              transition: 'border-color 0.15s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+            >
+              <Globe size={14} /> Website
             </a>
           )}
           {displayProfile?.twitter && (
             <a href={`https://twitter.com/${displayProfile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '5px 12px', borderRadius: 999,
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 16px', borderRadius: 'var(--radius-md)',
               background: 'var(--surface)', border: '1px solid var(--border)',
-              color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, textDecoration: 'none',
-            }}>
-              𝕏 {displayProfile.twitter}
+              color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, textDecoration: 'none',
+              transition: 'border-color 0.15s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = '#1DA1F2'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+            >
+              <Twitter size={14} fill="#1DA1F2" color="#1DA1F2" /> @{displayProfile.twitter.replace('@', '')}
             </a>
           )}
         </div>
 
-        {/* Feedback points badge */}
-        {feedbackPoints > 0 && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 999,
-            background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)',
-            color: '#F59E0B', fontSize: 13, fontWeight: 700, marginBottom: 16,
-          }}>
-            ⭐ {feedbackPoints} feedback point{feedbackPoints !== 1 ? 's' : ''}
-          </div>
-        )}
-
         {/* Edit button */}
         {!editing && (
           <button onClick={() => setEditing(true)} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '7px 16px', borderRadius: 999,
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>
-            <Pencil size={13} /> Edit Profile
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', borderRadius: 'var(--radius-full)',
+            background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+            color: 'var(--text-primary)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            transition: 'all 0.15s'
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-soft)'; e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface-elevated)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+          >
+            <Pencil size={14} /> Edit Profile
           </button>
         )}
       </div>
@@ -309,42 +355,53 @@ export const ProfilePage = () => {
       {/* Navigation menu */}
       <div style={{
         background: 'var(--surface)', borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 16,
+        border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 24,
       }}>
-        {menuItems.map(({ icon: Icon, label, to }, i) => (
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--surface-elevated)' }}>
+          <h3 style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account Settings</h3>
+        </div>
+        {menuItems.map(({ icon: Icon, label, to, desc }, i) => (
           <button key={to} onClick={() => navigate(to)} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '16px 20px',
+            width: '100%', padding: '20px',
             background: 'none', border: 'none',
             borderBottom: i < menuItems.length - 1 ? '1px solid var(--border)' : 'none',
             cursor: 'pointer', transition: 'background 0.12s',
+            textAlign: 'left'
           }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-elevated)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: 'var(--accent-soft)',
+                width: 44, height: 44, borderRadius: '12px',
+                background: 'var(--surface-elevated)', border: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Icon size={16} color="var(--accent)" />
+                <Icon size={20} color="var(--accent)" />
               </div>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontSize: 15 }}>{label}</span>
+              <div>
+                <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 16, display: 'block' }}>{label}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>{desc}</span>
+              </div>
             </div>
-            <span style={{ color: 'var(--text-muted)', fontSize: 18 }}>›</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: 20, fontWeight: 300 }}>›</span>
           </button>
         ))}
       </div>
 
       {/* Sign out */}
       <button onClick={handleSignOut} style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        width: '100%', padding: '14px', borderRadius: 'var(--radius-lg)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        width: '100%', padding: '16px', borderRadius: 'var(--radius-lg)',
         background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-        color: 'var(--error)', fontWeight: 600, fontSize: 15, cursor: 'pointer',
-      }}>
-        <LogOut size={16} /> Sign Out
+        color: 'var(--error)', fontWeight: 700, fontSize: 15, cursor: 'pointer',
+        transition: 'all 0.15s'
+      }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)' }}
+      >
+        <LogOut size={18} /> Sign Out of LaunchPad
       </button>
     </div>
   )
