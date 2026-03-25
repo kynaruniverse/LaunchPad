@@ -98,144 +98,111 @@ SELECT * FROM notifications LIMIT 1;
 
 ## Step 3: Configure Row-Level Security (RLS) Policies
 
-The migration creates tables but does not set up RLS policies. Configure these for security:
+The following scripts use `DO $$ ... END $$` blocks to check if a policy exists before attempting to create it. This prevents "already exists" errors.
 
 ### Products Table
 ```sql
--- Allow anyone to read products
-CREATE POLICY "Products are viewable by everyone"
-ON products FOR SELECT
-USING (true);
-
--- Allow authenticated users to insert their own products
-CREATE POLICY "Users can insert their own products"
-ON products FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
--- Allow users to update their own products
-CREATE POLICY "Users can update their own products"
-ON products FOR UPDATE
-USING (auth.uid() = user_id);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'products' AND policyname = 'Products are viewable by everyone') THEN
+        CREATE POLICY "Products are viewable by everyone" ON products FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'products' AND policyname = 'Users can insert their own products') THEN
+        CREATE POLICY "Users can insert their own products" ON products FOR INSERT WITH CHECK (auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'products' AND policyname = 'Users can update their own products') THEN
+        CREATE POLICY "Users can update their own products" ON products FOR UPDATE USING (auth.uid() = user_id);
+    END IF;
+END $$;
 ```
 
 ### Comments Table
 ```sql
--- Allow anyone to read comments
-CREATE POLICY "Comments are viewable by everyone"
-ON comments FOR SELECT
-USING (true);
-
--- Allow authenticated users to insert comments
-CREATE POLICY "Users can insert comments"
-ON comments FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
--- Allow product owners to update comment feedback_status
-CREATE POLICY "Product owners can update feedback status"
-ON comments FOR UPDATE
-USING (
-  auth.uid() = (
-    SELECT user_id FROM products WHERE id = product_id
-  )
-);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'comments' AND policyname = 'Comments are viewable by everyone') THEN
+        CREATE POLICY "Comments are viewable by everyone" ON comments FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'comments' AND policyname = 'Users can insert comments') THEN
+        CREATE POLICY "Users can insert comments" ON comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'comments' AND policyname = 'Product owners can update feedback status') THEN
+        CREATE POLICY "Product owners can update feedback status" ON comments FOR UPDATE USING (
+            auth.uid() = (SELECT user_id FROM products WHERE id = product_id)
+        );
+    END IF;
+END $$;
 ```
 
 ### Collections Table
 ```sql
--- Allow anyone to read public collections
-CREATE POLICY "Public collections are viewable by everyone"
-ON collections FOR SELECT
-USING (is_public = true OR auth.uid() = user_id);
-
--- Allow authenticated users to create collections
-CREATE POLICY "Users can create collections"
-ON collections FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
--- Allow collection owners to update their collections
-CREATE POLICY "Collection owners can update their collections"
-ON collections FOR UPDATE
-USING (auth.uid() = user_id);
-
--- Allow collection owners to delete their collections
-CREATE POLICY "Collection owners can delete their collections"
-ON collections FOR DELETE
-USING (auth.uid() = user_id);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collections' AND policyname = 'Public collections are viewable by everyone') THEN
+        CREATE POLICY "Public collections are viewable by everyone" ON collections FOR SELECT USING (is_public = true OR auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collections' AND policyname = 'Users can create collections') THEN
+        CREATE POLICY "Users can create collections" ON collections FOR INSERT WITH CHECK (auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collections' AND policyname = 'Collection owners can update their collections') THEN
+        CREATE POLICY "Collection owners can update their collections" ON collections FOR UPDATE USING (auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collections' AND policyname = 'Collection owners can delete their collections') THEN
+        CREATE POLICY "Collection owners can delete their collections" ON collections FOR DELETE USING (auth.uid() = user_id);
+    END IF;
+END $$;
 ```
 
 ### Collection Items Table
 ```sql
--- Allow anyone to read collection items if collection is public
-CREATE POLICY "Collection items are viewable if collection is public or owned"
-ON collection_items FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM collections c
-    WHERE c.id = collection_id
-    AND (c.is_public = true OR c.user_id = auth.uid())
-  )
-);
-
--- Allow collection owners to insert items
-CREATE POLICY "Collection owners can add items"
-ON collection_items FOR INSERT
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM collections c
-    WHERE c.id = collection_id
-    AND c.user_id = auth.uid()
-  )
-);
-
--- Allow collection owners to remove items
-CREATE POLICY "Collection owners can remove items"
-ON collection_items FOR DELETE
-USING (
-  EXISTS (
-    SELECT 1 FROM collections c
-    WHERE c.id = collection_id
-    AND c.user_id = auth.uid()
-  )
-);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collection_items' AND policyname = 'Collection items are viewable if collection is public or owned') THEN
+        CREATE POLICY "Collection items are viewable if collection is public or owned" ON collection_items FOR SELECT USING (
+            EXISTS (SELECT 1 FROM collections c WHERE c.id = collection_id AND (c.is_public = true OR c.user_id = auth.uid()))
+        );
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collection_items' AND policyname = 'Collection owners can add items') THEN
+        CREATE POLICY "Collection owners can add items" ON collection_items FOR INSERT WITH CHECK (
+            EXISTS (SELECT 1 FROM collections c WHERE c.id = collection_id AND c.user_id = auth.uid())
+        );
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'collection_items' AND policyname = 'Collection owners can remove items') THEN
+        CREATE POLICY "Collection owners can remove items" ON collection_items FOR DELETE USING (
+            EXISTS (SELECT 1 FROM collections c WHERE c.id = collection_id AND c.user_id = auth.uid())
+        );
+    END IF;
+END $$;
 ```
 
 ### Notifications Table
 ```sql
--- Allow users to read their own notifications
-CREATE POLICY "Users can read their own notifications"
-ON notifications FOR SELECT
-USING (auth.uid() = user_id);
-
--- Allow system to insert notifications (disable direct user inserts)
-CREATE POLICY "System can insert notifications"
-ON notifications FOR INSERT
-WITH CHECK (false); -- Disable for now; use triggers instead
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Users can read their own notifications') THEN
+        CREATE POLICY "Users can read their own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
+    END IF;
+END $$;
 ```
 
 ### Product Updates Table
 ```sql
--- Allow anyone to read product updates
-CREATE POLICY "Product updates are viewable by everyone"
-ON product_updates FOR SELECT
-USING (true);
-
--- Allow authenticated users to insert updates for their products
-CREATE POLICY "Users can insert updates for their products"
-ON product_updates FOR INSERT
-WITH CHECK (
-  auth.uid() = (
-    SELECT user_id FROM products WHERE id = product_id
-  )
-);
-
--- Allow product owners to delete their own updates
-CREATE POLICY "Product owners can delete their updates"
-ON product_updates FOR DELETE
-USING (
-  auth.uid() = (
-    SELECT user_id FROM products WHERE id = product_id
-  )
-);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'product_updates' AND policyname = 'Product updates are viewable by everyone') THEN
+        CREATE POLICY "Product updates are viewable by everyone" ON product_updates FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'product_updates' AND policyname = 'Users can insert updates for their products') THEN
+        CREATE POLICY "Users can insert updates for their products" ON product_updates FOR INSERT WITH CHECK (
+            auth.uid() = (SELECT user_id FROM products WHERE id = product_id)
+        );
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'product_updates' AND policyname = 'Product owners can delete their updates') THEN
+        CREATE POLICY "Product owners can delete their updates" ON product_updates FOR DELETE USING (
+            auth.uid() = (SELECT user_id FROM products WHERE id = product_id)
+        );
+    END IF;
+END $$;
 ```
 
 ---
@@ -258,36 +225,36 @@ ALTER TABLE product_updates ENABLE ROW LEVEL SECURITY;
 
 ```sql
 -- Products indexes
-CREATE INDEX idx_products_user_id ON products(user_id);
-CREATE INDEX idx_products_category ON products(category);
-CREATE INDEX idx_products_launch_status ON products(launch_status);
-CREATE INDEX idx_products_is_indie ON products(is_indie);
-CREATE INDEX idx_products_created_at ON products(created_at DESC);
-CREATE INDEX idx_products_trending_score ON products(trending_score DESC);
+CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_products_launch_status ON products(launch_status);
+CREATE INDEX IF NOT EXISTS idx_products_is_indie ON products(is_indie);
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_products_trending_score ON products(trending_score DESC);
 
 -- Comments indexes
-CREATE INDEX idx_comments_product_id ON comments(product_id);
-CREATE INDEX idx_comments_user_id ON comments(user_id);
-CREATE INDEX idx_comments_type ON comments(type);
-CREATE INDEX idx_comments_feedback_status ON comments(feedback_status);
+CREATE INDEX IF NOT EXISTS idx_comments_product_id ON comments(product_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_type ON comments(type);
+CREATE INDEX IF NOT EXISTS idx_comments_feedback_status ON comments(feedback_status);
 
 -- Collections indexes
-CREATE INDEX idx_collections_user_id ON collections(user_id);
-CREATE INDEX idx_collections_is_public ON collections(is_public);
+CREATE INDEX IF NOT EXISTS idx_collections_user_id ON collections(user_id);
+CREATE INDEX IF NOT EXISTS idx_collections_is_public ON collections(is_public);
 
 -- Collection items indexes
-CREATE INDEX idx_collection_items_collection_id ON collection_items(collection_id);
-CREATE INDEX idx_collection_items_product_id ON collection_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_collection_items_collection_id ON collection_items(collection_id);
+CREATE INDEX IF NOT EXISTS idx_collection_items_product_id ON collection_items(product_id);
 
 -- Notifications indexes
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_read ON notifications(read);
-CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
 
 -- Product updates indexes
-CREATE INDEX idx_product_updates_product_id ON product_updates(product_id);
-CREATE INDEX idx_product_updates_author_id ON product_updates(author_id);
-CREATE INDEX idx_product_updates_created_at ON product_updates(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_product_updates_product_id ON product_updates(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_updates_author_id ON product_updates(author_id);
+CREATE INDEX IF NOT EXISTS idx_product_updates_created_at ON product_updates(created_at DESC);
 ```
 
 ---
