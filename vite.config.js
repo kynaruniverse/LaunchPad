@@ -4,4 +4,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/',
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Split vendor chunks for better caching
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          motion: ['framer-motion'],
+        },
+      },
+    },
+  },
 })

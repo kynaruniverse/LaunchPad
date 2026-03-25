@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Rocket, Home, BookMarked, LayoutDashboard, User, Bell, Plus, Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -15,6 +15,11 @@ export const Navbar = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
 
   return (
     <>
@@ -69,7 +74,8 @@ export const Navbar = () => {
             <span>Submit</span>
           </button>
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => setMenuOpen(prev => !prev)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             style={{
               display: 'none', width: 36, height: 36, borderRadius: '50%',
               background: 'var(--surface)', border: '1px solid var(--border)',
@@ -84,24 +90,34 @@ export const Navbar = () => {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div style={{
-          position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99,
-          background: 'var(--surface)', borderBottom: '1px solid var(--border)',
-          padding: 16, display: 'flex', flexDirection: 'column', gap: 4,
-        }}>
-          {navLinks.map(({ to, icon: Icon, label }) => (
-            <Link key={to} to={to} onClick={() => setMenuOpen(false)} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '12px 16px', borderRadius: 'var(--radius-md)',
-              fontSize: 15, fontWeight: 500, textDecoration: 'none',
-              color: pathname === to ? 'var(--accent)' : 'var(--text-primary)',
-              background: pathname === to ? 'var(--accent-soft)' : 'transparent',
-            }}>
-              <Icon size={18} />
-              {label}
-            </Link>
-          ))}
-        </div>
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, top: 60, zIndex: 98,
+              background: 'rgba(0,0,0,0.4)',
+            }}
+          />
+          <div style={{
+            position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99,
+            background: 'var(--surface)', borderBottom: '1px solid var(--border)',
+            padding: 16, display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
+            {navLinks.map(({ to, icon: Icon, label }) => (
+              <Link key={to} to={to} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                fontSize: 15, fontWeight: 500, textDecoration: 'none',
+                color: pathname === to ? 'var(--accent)' : 'var(--text-primary)',
+                background: pathname === to ? 'var(--accent-soft)' : 'transparent',
+              }}>
+                <Icon size={18} />
+                {label}
+              </Link>
+            ))}
+          </div>
+        </>
       )}
 
       <style>{`

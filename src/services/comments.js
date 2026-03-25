@@ -20,8 +20,20 @@ export const commentsService = {
       .single()
     if (error) throw error
 
-    const { data: product } = await supabase.from('products').select('comment_count').eq('id', productId).single()
-    await supabase.from('products').update({ comment_count: (product?.comment_count || 0) + 1 }).eq('id', productId)
+    // Increment comment count — only after successful insert
+    const { data: product } = await supabase
+      .from('products')
+      .select('comment_count')
+      .eq('id', productId)
+      .single()
+
+    if (product) {
+      await supabase
+        .from('products')
+        .update({ comment_count: (product.comment_count || 0) + 1 })
+        .eq('id', productId)
+    }
+
     return data
   },
 }

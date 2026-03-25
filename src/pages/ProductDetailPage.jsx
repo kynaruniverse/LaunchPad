@@ -24,9 +24,10 @@ export const ProductDetailPage = () => {
     loadProduct()
   }, [id])
 
+  // Only check upvote status when user or product id changes — not on every product update
   useEffect(() => {
-    if (user && product) checkUpvoted()
-  }, [user, product])
+    if (user && id) checkUpvoted()
+  }, [user, id])
 
   const loadProduct = async () => {
     try {
@@ -42,9 +43,11 @@ export const ProductDetailPage = () => {
 
   const checkUpvoted = async () => {
     try {
-      const has = await votesService.hasUpvoted(user.id, product.id)
+      const has = await votesService.hasUpvoted(user.id, id)
       setUpvoted(has)
-    } catch (e) {}
+    } catch (e) {
+      // Non-critical
+    }
   }
 
   const handleUpvote = async () => {
@@ -52,10 +55,35 @@ export const ProductDetailPage = () => {
     try {
       const isUpvoted = await votesService.toggleUpvote(user.id, product.id)
       setUpvoted(isUpvoted)
-      setProduct(prev => ({ ...prev, upvote_count: prev.upvote_count + (isUpvoted ? 1 : -1) }))
+      setProduct(prev => ({
+        ...prev,
+        upvote_count: Math.max(0, (prev.upvote_count || 0) + (isUpvoted ? 1 : -1)),
+      }))
     } catch (e) {
       toast.error('Failed to upvote')
     }
+  }
+
+  const handleShare = async () => {
+    const url = window.location.href
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.title, text: product.tagline, url })
+      } catch (e) {
+        // User cancelled share — not an error
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url)
+        toast.success('Link copied to clipboard!')
+      } catch (e) {
+        toast.error('Could not copy link')
+      }
+    }
+  }
+
+  const handleBookmark = () => {
+    toast.info('Collections coming soon!')
   }
 
   if (loading) return <LoadingSpinner fullScreen message="Loading product..." />
@@ -100,6 +128,15 @@ export const ProductDetailPage = () => {
               UPDATED
             </span>
           )}
+          {product.status === 'retired' && (
+            <span style={{
+              padding: '4px 12px', borderRadius: 999,
+              background: 'rgba(90,90,112,0.2)', color: 'var(--text-muted)',
+              fontSize: 12, fontWeight: 700,
+            }}>
+              RETIRED
+            </span>
+          )}
         </div>
 
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
@@ -129,10 +166,12 @@ export const ProductDetailPage = () => {
       </div>
 
       {/* About */}
-      <div style={{ marginBottom: 24 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: 'var(--text-primary)' }}>About</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.7 }}>{product.description}</p>
-      </div>
+      {product.description && (
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10, color: 'var(--text-primary)' }}>About</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.7 }}>{product.description}</p>
+        </div>
+      )}
 
       {/* Tags */}
       {product.tags?.length > 0 && (
@@ -161,6 +200,7 @@ export const ProductDetailPage = () => {
           background: 'var(--accent-soft)', border: '1px solid var(--accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 18, fontWeight: 700, color: 'var(--accent)',
+          flexShrink: 0,
         }}>
           {(product.profiles?.username || 'U')[0].toUpperCase()}
         </div>
@@ -176,7 +216,7 @@ export const ProductDetailPage = () => {
       <div style={{
         padding: 20, borderRadius: 'var(--radius-lg)',
         background: 'var(--surface)', border: '1px solid var(--border)',
-        marginBottom: 32,
+        marginBottom: 100,
       }}>
         <CommentSection productId={product.id} />
       </div>
@@ -191,18 +231,28 @@ export const ProductDetailPage = () => {
         zIndex: 50,
       }}>
         <UpvoteButton count={product.upvote_count || 0} upvoted={upvoted} onPress={handleUpvote} />
-        <button style={{
-          padding: '10px', borderRadius: 'var(--radius-md)',
-          background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-          color: 'var(--text-secondary)', cursor: 'pointer',
-        }}>
+        <button
+          onClick={handleBookmark}
+          aria-label="Save to collection"
+          style={{
+            padding: '10px', borderRadius: 'var(--radius-md)',
+            background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+            color: 'var(--text-secondary)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center',
+          }}
+        >
           <Bookmark size={18} />
         </button>
-        <button style={{
-          padding: '10px', borderRadius: 'var(--radius-md)',
-          background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-          color: 'var(--text-secondary)', cursor: 'pointer',
-        }}>
+        <button
+          onClick={handleShare}
+          aria-label="Share product"
+          style={{
+            padding: '10px', borderRadius: 'var(--radius-md)',
+            background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+            color: 'var(--text-secondary)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center',
+          }}
+        >
           <Share2 size={18} />
         </button>
         {product.website_url && (

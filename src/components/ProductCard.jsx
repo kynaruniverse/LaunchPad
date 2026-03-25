@@ -1,13 +1,20 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageCircle, Bookmark, ExternalLink } from 'lucide-react'
+import { MessageCircle, Bookmark } from 'lucide-react'
 import { UpvoteButton } from './UpvoteButton'
 import { CATEGORY_COLORS } from '../theme'
+import { useToast } from '../context/ToastContext'
 
 export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
   const navigate = useNavigate()
+  const toast = useToast()
   const catColor = CATEGORY_COLORS[product.category] || CATEGORY_COLORS.Other
   const thumbnail = product.media_urls?.[0]
+
+  const handleBookmark = (e) => {
+    e.stopPropagation()
+    toast.info('Collections coming soon!')
+  }
 
   return (
     <div
@@ -33,7 +40,12 @@ export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
       {/* Thumbnail */}
       <div style={{ position: 'relative', aspectRatio: '16/9', background: 'var(--surface-elevated)' }}>
         {thumbnail ? (
-          <img src={thumbnail} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={thumbnail}
+            alt={product.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={e => { e.currentTarget.style.display = 'none' }}
+          />
         ) : (
           <div style={{
             width: '100%', height: '100%', display: 'flex',
@@ -112,11 +124,16 @@ export const ProductCard = ({ product, onUpvote, upvoted, isNew = false }) => {
             {product.comment_count || 0}
           </div>
 
-          <button style={{
-            padding: '5px 8px', borderRadius: 999,
-            background: 'transparent', border: 'none',
-            color: 'var(--text-secondary)', cursor: 'pointer',
-          }}>
+          <button
+            onClick={handleBookmark}
+            aria-label="Save to collection"
+            style={{
+              padding: '5px 8px', borderRadius: 999,
+              background: 'transparent', border: 'none',
+              color: 'var(--text-secondary)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center',
+            }}
+          >
             <Bookmark size={13} />
           </button>
 

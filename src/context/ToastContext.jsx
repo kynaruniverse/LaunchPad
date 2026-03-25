@@ -11,9 +11,9 @@ export const ToastProvider = ({ children }) => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500)
   }, [])
 
-  const success = (msg) => showToast(msg, 'success')
-  const error = (msg) => showToast(msg, 'error')
-  const info = (msg) => showToast(msg, 'info')
+  const success = useCallback((msg) => showToast(msg, 'success'), [showToast])
+  const error = useCallback((msg) => showToast(msg, 'error'), [showToast])
+  const info = useCallback((msg) => showToast(msg, 'info'), [showToast])
 
   return (
     <ToastContext.Provider value={{ showToast, success, error, info }}>
@@ -22,6 +22,7 @@ export const ToastProvider = ({ children }) => {
         position: 'fixed', top: 20, right: 20,
         zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8,
         maxWidth: 360, width: 'calc(100vw - 40px)',
+        pointerEvents: 'none',
       }}>
         {toasts.map(t => (
           <div key={t.id} style={{
@@ -34,6 +35,7 @@ export const ToastProvider = ({ children }) => {
             borderLeft: `3px solid ${t.type === 'success' ? 'var(--success)' : t.type === 'error' ? 'var(--error)' : 'var(--accent)'}`,
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             animation: 'slideIn 0.2s ease',
+            pointerEvents: 'auto',
           }}>
             {t.message}
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, Rocket, MessageCircle, Plus, MoreHorizontal, Info } from 'lucide-react'
+import { Eye, Rocket, MessageCircle, Plus, MoreHorizontal, TrendingUp } from 'lucide-react'
 import { productsService } from '../services/products'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -13,8 +13,13 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
     flex: 1, padding: 16, borderRadius: 'var(--radius-lg)',
     background: 'var(--surface)', border: '1px solid var(--border)',
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+    minWidth: 0,
   }}>
-    <div style={{ width: 40, height: 40, borderRadius: '50%', background: `${color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{
+      width: 40, height: 40, borderRadius: '50%',
+      background: `${color}20`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
       <Icon size={18} color={color} />
     </div>
     <p style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>{value}</p>
@@ -22,28 +27,34 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
   </div>
 )
 
-const TrendingTooltip = () => (
-  <div style={{
-    position: 'relative', display: 'inline-block', cursor: 'help', marginLeft: 4,
-  }}>
-    <Info size={12} color="var(--text-muted)" />
-    <div style={{
-      position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-      background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-      borderRadius: 8, padding: 8, width: 200, fontSize: 11, color: 'var(--text-secondary)',
-      whiteSpace: 'normal', textAlign: 'center', zIndex: 100, display: 'none',
-      pointerEvents: 'none',
-    }} className="tooltip-content">
-      <strong>Trending Score</strong><br/>
-      (upvotes × 3 + comments × 2) ÷ (1 + age in days)
+// Proper React-state tooltip — the CSS inline-style selector hack was broken
+const TrendingBadge = ({ score }) => {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12, position: 'relative', cursor: 'default' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <TrendingUp size={12} />
+      {score !== undefined ? Number(score).toFixed(1) : '0.0'}
+      {hovered && (
+        <div style={{
+          position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+          background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+          borderRadius: 8, padding: '8px 10px', width: 190, fontSize: 11,
+          color: 'var(--text-secondary)', whiteSpace: 'normal', textAlign: 'center',
+          zIndex: 100, pointerEvents: 'none', marginBottom: 6,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+        }}>
+          <strong style={{ color: 'var(--text-primary)' }}>Trending Score</strong><br />
+          (upvotes × 3 + comments × 2) ÷ (1 + age in days)
+        </div>
+      )}
     </div>
-    <style>{`
-      [style*="cursor: help"]:hover .tooltip-content {
-        display: block;
-      }
-    `}</style>
-  </div>
-)
+  )
+}
 
 export const DashboardPage = () => {
   const [products, setProducts] = useState([])
@@ -53,23 +64,39 @@ export const DashboardPage = () => {
   const toast = useToast()
   const navigate = useNavigate()
 
-  useEffect(() => { if (user) loadProducts() }, [user])
+  useEffect(() => {
+    if (user) loadProducts()
+    else setLoading(false)
+  }, [user])
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    if (menuOpen === null) return
+    const handler = () => setMenuOpen(null)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [menuOpen])
 
   const loadProducts = async () => {
     try {
       const data = await productsService.getUserProducts(user.id)
       setProducts(data || [])
-    } catch (e) { toast.error('Failed to load products') }
-    finally { setLoading(false) }
+    } catch (e) {
+      toast.error('Failed to load products')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleStatusChange = async (productId, status) => {
     try {
       await productsService.updateProductStatus(productId, status)
       setProducts(prev => prev.map(p => p.id === productId ? { ...p, status } : p))
-      toast.success(`Status → ${status}`)
+      toast.success(`Status updated to ${status}`)
       setMenuOpen(null)
-    } catch (e) { toast.error('Failed to update') }
+    } catch (e) {
+      toast.error('Failed to update status')
+    }
   }
 
   if (!user) return (
@@ -95,7 +122,9 @@ export const DashboardPage = () => {
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
             Hey, {profile?.username || 'Maker'} 👋
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>{products.length} product{products.length !== 1 ? 's' : ''} submitted</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            {products.length} product{products.length !== 1 ? 's' : ''} submitted
+          </p>
         </div>
         <button onClick={() => navigate('/submit')} style={{
           display: 'flex', alignItems: 'center', gap: 6,
@@ -114,10 +143,14 @@ export const DashboardPage = () => {
         <StatCard icon={MessageCircle} label="Comments" value={totalComments} color="#8B5CF6" />
       </div>
 
-      {/* Products */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Your Products</h2>
+      {/* Products list */}
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
+        Your Products
+      </h2>
 
-      {loading ? <LoadingSpinner /> : products.length === 0 ? (
+      {loading ? (
+        <LoadingSpinner />
+      ) : products.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>📦</div>
           <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>No products yet</p>
@@ -125,78 +158,85 @@ export const DashboardPage = () => {
             padding: '10px 24px', borderRadius: 'var(--radius-full)',
             background: 'var(--accent-soft)', border: '1px solid var(--accent)',
             color: 'var(--accent)', fontWeight: 600, cursor: 'pointer',
-          }}>Submit your first product</button>
+          }}>
+            Submit your first product
+          </button>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {products.map(p => (
-            <div key={p.id} style={{
-              padding: 16, borderRadius: 'var(--radius-lg)',
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              display: 'flex', gap: 12, alignItems: 'flex-start', position: 'relative',
-            }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{p.title}</p>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }} >{p.tagline}</p>
+            <div
+              key={p.id}
+              style={{
+                padding: 16, borderRadius: 'var(--radius-lg)',
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                display: 'flex', gap: 12, alignItems: 'flex-start', position: 'relative',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p
+                  style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2, cursor: 'pointer' }}
+                  onClick={() => navigate(`/product/${p.id}`)}
+                >
+                  {p.title}
+                </p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {p.tagline}
+                </p>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {[
-                    { icon: Eye, val: p.view_count || 0, label: 'views' },
-                    { icon: Rocket, val: p.upvote_count || 0, label: 'upvotes' },
-                    { icon: MessageCircle, val: p.comment_count || 0, label: 'comments' },
-                    { icon: () => <Info size={12} />, val: p.trending_score ? p.trending_score.toFixed(1) : '0.0', label: 'trending', tooltip: true }
-                  ].map(({ icon: Icon, val, label, tooltip }, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12, position: 'relative' }}>
-                      <Icon size={12} />
-                      {val}
-                      {tooltip && (
-                        <div style={{ position: 'relative', display: 'inline-block', marginLeft: 2 }}>
-                          <Info size={10} style={{ opacity: 0.6 }} />
-                          <div style={{
-                            position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-                            background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-                            borderRadius: 6, padding: 4, width: 160, fontSize: 10, color: 'var(--text-secondary)',
-                            whiteSpace: 'normal', textAlign: 'center', zIndex: 100, display: 'none',
-                            pointerEvents: 'none', marginBottom: 4,
-                          }} className="trending-tooltip">
-                            <strong>Trending Score</strong><br/>
-                            (upvotes × 3 + comments × 2) ÷ (1 + age in days)
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12 }}>
+                    <Eye size={12} /> {p.view_count || 0} views
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12 }}>
+                    <Rocket size={12} /> {p.upvote_count || 0} upvotes
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-muted)', fontSize: 12 }}>
+                    <MessageCircle size={12} /> {p.comment_count || 0} comments
+                  </span>
+                  <TrendingBadge score={p.trending_score} />
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
                 <span style={{
                   padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 700,
-                  background: `${STATUS_COLORS[p.status]}20`,
-                  color: STATUS_COLORS[p.status],
-                  border: `1px solid ${STATUS_COLORS[p.status]}40`,
+                  background: `${STATUS_COLORS[p.status] || STATUS_COLORS.active}20`,
+                  color: STATUS_COLORS[p.status] || STATUS_COLORS.active,
+                  border: `1px solid ${STATUS_COLORS[p.status] || STATUS_COLORS.active}40`,
                   textTransform: 'capitalize',
                 }}>
-                  {p.status}
+                  {p.status || 'active'}
                 </span>
-                <button onClick={() => setMenuOpen(menuOpen === p.id ? null : p.id)} style={{
-                  background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-                  borderRadius: 8, padding: '6px 8px', cursor: 'pointer',
-                }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === p.id ? null : p.id) }}
+                  style={{
+                    background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+                    borderRadius: 8, padding: '6px 8px', cursor: 'pointer',
+                  }}
+                >
                   <MoreHorizontal size={14} color="var(--text-secondary)" />
                 </button>
               </div>
+
+              {/* Context menu */}
               {menuOpen === p.id && (
-                <div style={{
-                  position: 'absolute', right: 16, top: 60, zIndex: 10,
-                  background: 'var(--surface-elevated)', border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-md)', overflow: 'hidden', minWidth: 140,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                }}>
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'absolute', right: 16, top: 60, zIndex: 10,
+                    background: 'var(--surface-elevated)', border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-md)', overflow: 'hidden', minWidth: 140,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                  }}
+                >
                   {['active', 'updated', 'retired'].map(s => (
                     <button key={s} onClick={() => handleStatusChange(p.id, s)} style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '10px 14px', width: '100%',
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--text-primary)', fontSize: 13, textAlign: 'left',
+                      background: p.status === s ? `${STATUS_COLORS[s]}15` : 'none',
+                      border: 'none', cursor: 'pointer',
+                      color: p.status === s ? STATUS_COLORS[s] : 'var(--text-primary)',
+                      fontSize: 13, textAlign: 'left', fontWeight: p.status === s ? 700 : 400,
                     }}>
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: STATUS_COLORS[s] }} />
                       {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -208,19 +248,6 @@ export const DashboardPage = () => {
           ))}
         </div>
       )}
-      <style>{`
-        .trending-tooltip {
-          display: none;
-        }
-        [style*="cursor: pointer"]:hover .trending-tooltip,
-        [style*="align-items: center"]:hover .trending-tooltip {
-          display: block;
-        }
-        /* Better hover for tooltip */
-        .trending-tooltip {
-          pointer-events: none;
-        }
-      `}</style>
     </div>
   )
 }
