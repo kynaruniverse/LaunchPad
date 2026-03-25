@@ -69,7 +69,7 @@ export const UpdateComposer = ({ products, onUpdatePosted }) => {
     )
   }
 
-  const selectedType = UPDATE_TYPES.find(t => t.value === selectedType)
+  const selectedTypeInfo = UPDATE_TYPES.find(t => t.value === selectedType)
 
   const inputStyle = {
     padding: '12px 14px',
@@ -122,7 +122,7 @@ export const UpdateComposer = ({ products, onUpdatePosted }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <label style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {UPDATE_TYPES.map(t => (
+                {UPDATE_TYPES.map(t => (
               <button
                 key={t.value}
                 type="button"
@@ -130,9 +130,9 @@ export const UpdateComposer = ({ products, onUpdatePosted }) => {
                 style={{
                   padding: '8px 12px', borderRadius: 'var(--radius-md)', fontSize: 12, fontWeight: 700,
                   cursor: 'pointer',
-                  background: selectedType.value === t.value ? `${t.color}15` : 'var(--surface-elevated)',
-                  border: `1px solid ${selectedType.value === t.value ? t.color : 'var(--border)'}`,
-                  color: selectedType.value === t.value ? t.color : 'var(--text-muted)',
+                  background: selectedTypeInfo.value === t.value ? `${t.color}15` : 'var(--surface-elevated)',
+                  border: `1px solid ${selectedTypeInfo.value === t.value ? t.color : 'var(--border)'}`,
+                  color: selectedTypeInfo.value === t.value ? t.color : 'var(--text-muted)',
                   transition: 'all 0.12s',
                   display: 'flex', alignItems: 'center', gap: 4
                 }}
@@ -150,7 +150,7 @@ export const UpdateComposer = ({ products, onUpdatePosted }) => {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={`e.g. ${selectedType?.label} launched`}
+              placeholder={`e.g. ${selectedTypeInfo?.label} launched`}
           style={inputStyle}
           maxLength={100}
         />
