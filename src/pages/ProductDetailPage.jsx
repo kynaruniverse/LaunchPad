@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ExternalLink, Eye, MessageCircle, Calendar, Share2, Bookmark, User, Info } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Eye, MessageCircle, Calendar, Share2, Bookmark, User, Info, TrendingUp } from 'lucide-react'
 import { MediaCarousel } from '../components/MediaCarousel'
 import { CommentSection } from '../components/CommentSection'
 import { UpvoteButton } from '../components/UpvoteButton'
@@ -21,6 +21,7 @@ export const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true)
   const [upvoted, setUpvoted] = useState(false)
   const [showCollectionModal, setShowCollectionModal] = useState(false)
+  const [showUpdateComposer, setShowUpdateComposer] = useState(false)
   const { user } = useAuth()
   const toast = useToast()
 
@@ -165,7 +166,7 @@ export const ProductDetailPage = () => {
           { icon: Eye,           label: 'Views',    value: product.view_count || 0 },
           { icon: MessageCircle, label: 'Feedback', value: product.comment_count || 0 },
           { icon: Calendar,      label: 'Launched', value: new Date(product.created_at).toLocaleDateString() },
-          { icon: Info,          label: 'Stage',    value: launchStatus?.label || 'Active' },
+          { icon: TrendingUp,    label: 'Trending', value: product.trending_score ? Number(product.trending_score).toFixed(1) : '0.0' },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -245,16 +246,31 @@ export const ProductDetailPage = () => {
         <section>
           {isOwner && (
             <div style={{ marginBottom: 24 }}>
-              <UpdateComposer 
-                products={[product]} 
-                onUpdatePosted={() => {
-                  // The ProductUpdates component will handle its own reload via its internal useEffect
-                  // But we might want to force a refresh if we wanted to
-                }} 
-              />
+              {showUpdateComposer ? (
+                <UpdateComposer 
+                  products={[product]} 
+                  onUpdatePosted={() => {
+                    setShowUpdateComposer(false)
+                    // Optionally trigger a refresh of updates
+                  }} 
+                />
+              ) : (
+                <button onClick={() => setShowUpdateComposer(true)} style={{
+                  width: '100%', padding: '16px 24px', borderRadius: 'var(--radius-lg)',
+                  background: 'var(--surface)', border: '1px solid var(--accent)',
+                  color: 'var(--accent)', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  transition: 'all 0.15s'
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-soft)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)' }}
+                >
+                  📝 Post an Update
+                </button>
+              )}
             </div>
           )}
-          <ProductUpdates productId={product.id} />
+          <ProductUpdates productId={product.id} isOwner={isOwner} />
         </section>
       </div>
 

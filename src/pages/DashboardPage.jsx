@@ -104,7 +104,7 @@ export const DashboardPage = () => {
             .catch(() => [])
         )
       )
-      const flat = all.flat().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 30)
+      const flat = all.flat().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 50)
       setRecentFeedback(flat)
     } catch (e) {
       console.error('Error loading feedback:', e)
