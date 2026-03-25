@@ -143,10 +143,13 @@ export const CommentSection = ({ productId, productOwnerId }) => {
     if (!user) { toast.error('Sign in to leave feedback'); return }
     setSubmitting(true)
     try {
-      const c = await commentsService.addComment(user.id, productId, text.trim(), selectedType)
-      setComments(prev => [...prev, c])
+      const c = await commentsService.addComment(productId, user.id, text.trim(), selectedType)
+      // The service now returns the new comment. We need to reload to get profiles joined or manually construct it.
+      // For simplicity and consistency with joined data, we reload.
+      await loadComments()
       setText('')
       setSelectedType('general')
+      toast.success('Feedback posted! +1 point')
     } catch (e) {
       toast.error('Failed to post feedback')
     } finally {

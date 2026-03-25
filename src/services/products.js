@@ -77,7 +77,7 @@ export const productsService = {
    * Get a single product — increments view count via RPC.
    */
   async getProduct(id) {
-    const { data, error } = await supabase.rpc('increment_product_view', { product_id: id })
+    const { data, error } = await supabase.rpc('increment_product_view', { p_id: id })
     if (error) throw error
     // RPC returns SETOF → array; take first row
     return Array.isArray(data) ? data[0] : data

@@ -29,7 +29,7 @@ export const votesService = {
       if (deleteError) throw deleteError
 
       // Decrement count — only after successful delete
-      await supabase.rpc('decrement_upvote', { pid: productId }).catch(() => {
+      await supabase.rpc('decrement_upvote', { p_id: productId }).catch(() => {
         // Fallback: manual decrement
         supabase
           .from('products')
@@ -53,7 +53,7 @@ export const votesService = {
       if (insertError) throw insertError
 
       // Increment count — only after successful insert
-      await supabase.rpc('increment_upvote', { pid: productId }).catch(() => {
+      await supabase.rpc('increment_upvote', { p_id: productId }).catch(() => {
         // Fallback: manual increment
         supabase
           .from('products')

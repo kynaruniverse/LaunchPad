@@ -64,7 +64,7 @@ export const commentsService = {
     }
 
     // Award 1 feedback point to the commenter (non-blocking)
-    supabase.rpc('increment_feedback_points', { commenter_id: userId, amount: 1 }).catch(() => {
+    supabase.rpc('increment_feedback_points', { u_id: userId, points: 1 }).catch(() => {
       // Silently fail — points are cosmetic, not critical
     })
 
@@ -94,7 +94,7 @@ export const commentsService = {
 
     // Award bonus points when transitioning TO done (not already done)
     if (status === 'done' && comment.feedback_status !== 'done') {
-      supabase.rpc('award_done_bonus', { commenter_id: comment.user_id }).catch(() => {})
+      supabase.rpc('award_done_bonus', { c_id: commentId }).catch(() => {})
     }
 
     return data
